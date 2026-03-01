@@ -7,7 +7,6 @@ import { WeekToggle } from "@/components/shared/week-toggle";
 import {
   LunchDayList,
   type LunchSlot,
-  type Profile,
 } from "@/components/lunch/lunch-day-list";
 import { getWeekMonday, toDateString } from "@/lib/rotation";
 
@@ -35,13 +34,10 @@ export default async function LunchPage({
 
   const { data: profilesData } = await supabase
     .from("profiles")
-    .select("id, display_name, color, avatar_emoji, avatar_url, default_lunch")
+    .select("id, display_name, color, avatar_emoji, avatar_url")
     .order("display_name");
 
-  const profiles: Profile[] = (profilesData ?? []).map((p) => ({
-    ...p,
-    default_lunch: p.default_lunch ?? null,
-  }));
+  const profiles = profilesData ?? [];
 
   let slots: LunchSlot[] = [];
 
@@ -49,37 +45,22 @@ export default async function LunchPage({
     const { data: lunchData } = await supabase
       .from("lunch_slots")
       .select(
-        "id, date, status, note, cook_id, cook:profiles!lunch_slots_cook_id_fkey(id, display_name, color, avatar_emoji, avatar_url)"
+        "id, date, status, note, eaters, cook_id, recipe_id, ingredients_pushed, cook:profiles!lunch_slots_cook_id_fkey(id, display_name, color, avatar_emoji, avatar_url), recipe:recipes!lunch_slots_recipe_id_fkey(id, name)"
       )
       .eq("week_id", week.id)
       .order("date");
-
-    const slotIds = (lunchData ?? []).map((s) => s.id);
-    let prefsData: Array<{
-      id: string;
-      lunch_slot_id: string;
-      user_id: string;
-      preference: string | null;
-      eating: boolean;
-      note: string | null;
-    }> = [];
-
-    if (slotIds.length > 0) {
-      const { data } = await supabase
-        .from("lunch_preferences")
-        .select("id, lunch_slot_id, user_id, preference, eating, note")
-        .in("lunch_slot_id", slotIds);
-      prefsData = (data ?? []) as typeof prefsData;
-    }
 
     slots = (lunchData ?? []).map((slot) => ({
       id: slot.id,
       date: slot.date,
       status: slot.status as LunchSlot["status"],
       note: slot.note ?? null,
+      eaters: (slot.eaters ?? []) as string[],
       cook_id: slot.cook_id!,
       cook: slot.cook as unknown as LunchSlot["cook"],
-      preferences: prefsData.filter((p) => p.lunch_slot_id === slot.id),
+      recipe_id: (slot.recipe_id as string) ?? null,
+      recipe_name: (slot.recipe as unknown as { name: string } | null)?.name ?? null,
+      ingredients_pushed: slot.ingredients_pushed as boolean,
     }));
   }
 
@@ -92,7 +73,7 @@ export default async function LunchPage({
             href={`/dinner${isNext ? "?week=next" : ""}`}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            Diner →
+            Souper →
           </Link>
         }
       />

@@ -124,7 +124,7 @@ export function MiniWeekPreview({
         })}
 
         {/* Dinner row */}
-        <span className="text-[10px] text-muted-foreground pr-1.5">Diner</span>
+        <span className="text-[10px] text-muted-foreground pr-1.5">Souper</span>
         {week.map((day) => {
           const isToday = !showNext && day.date === todayStr;
           const isPast = !showNext && day.date < todayStr;

@@ -57,14 +57,14 @@ export default async function WeekPage({
     supabase
       .from("dinner_slots")
       .select(
-        "id, date, status, note, eaters, cook_id, cook:profiles!dinner_slots_cook_id_fkey(id, display_name, color, avatar_emoji, avatar_url)"
+        "id, date, status, note, eaters, cook_id, recipe:recipes!dinner_slots_recipe_id_fkey(name), cook:profiles!dinner_slots_cook_id_fkey(id, display_name, color, avatar_emoji, avatar_url)"
       )
       .eq("week_id", week.id)
       .order("date"),
     supabase
       .from("lunch_slots")
       .select(
-        "id, date, status, cook_id, cook:profiles!lunch_slots_cook_id_fkey(id, display_name, color, avatar_emoji, avatar_url)"
+        "id, date, status, eaters, cook_id, recipe:recipes!lunch_slots_recipe_id_fkey(name), cook:profiles!lunch_slots_cook_id_fkey(id, display_name, color, avatar_emoji, avatar_url)"
       )
       .eq("week_id", week.id)
       .order("date"),
@@ -113,6 +113,7 @@ export default async function WeekPage({
             cookColor: (dinner.cook as unknown as ProfileInfo).color,
             cookId: dinner.cook_id!,
             note: dinner.note,
+            recipeName: (dinner.recipe as unknown as { name: string } | null)?.name ?? null,
             status: dinner.status as string,
             eaterCount: (dinner.eaters as string[])?.length ?? 0,
           }
@@ -124,7 +125,9 @@ export default async function WeekPage({
             cookName: (lunch.cook as unknown as ProfileInfo).display_name,
             cookColor: (lunch.cook as unknown as ProfileInfo).color,
             cookId: lunch.cook_id!,
+            recipeName: (lunch.recipe as unknown as { name: string } | null)?.name ?? null,
             status: lunch.status as string,
+            eaterCount: (lunch.eaters as string[])?.length ?? 0,
           }
         : null,
       chores: choresByDate.get(dateStr) ?? [],

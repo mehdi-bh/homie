@@ -45,7 +45,7 @@ export default async function DinnerPage({
     const { data: dinnerData } = await supabase
       .from("dinner_slots")
       .select(
-        "id, date, status, note, eaters, cook_id, cook:profiles!dinner_slots_cook_id_fkey(id, display_name, color, avatar_emoji, avatar_url)"
+        "id, date, status, note, eaters, cook_id, recipe_id, ingredients_pushed, cook:profiles!dinner_slots_cook_id_fkey(id, display_name, color, avatar_emoji, avatar_url), recipe:recipes!dinner_slots_recipe_id_fkey(id, name)"
       )
       .eq("week_id", week.id)
       .order("date");
@@ -58,13 +58,16 @@ export default async function DinnerPage({
       eaters: (slot.eaters ?? []) as string[],
       cook_id: slot.cook_id!,
       cook: slot.cook as unknown as DinnerSlot["cook"],
+      recipe_id: (slot.recipe_id as string) ?? null,
+      recipe_name: (slot.recipe as unknown as { name: string } | null)?.name ?? null,
+      ingredients_pushed: slot.ingredients_pushed as boolean,
     }));
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Diner"
+        title="Souper"
         action={
           <Link
             href={`/lunch${isNext ? "?week=next" : ""}`}

@@ -7,12 +7,15 @@ import { registerServiceWorker, subscribeToPush, sendSubscriptionToServer } from
 
 const REALTIME_TABLES = [
   "grocery_items",
+  "grocery_staples",
   "dinner_slots",
   "lunch_slots",
   "lunch_preferences",
   "chore_slots",
   "car_reservations",
   "swaps",
+  "recipes",
+  "recipe_ingredients",
 ] as const;
 
 const DEBOUNCE_MS = 500;

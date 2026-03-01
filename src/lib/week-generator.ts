@@ -101,6 +101,7 @@ export async function generateWeek(targetDate?: Date) {
     date: toDateString(date),
     cook_id: lunchCooks[i],
     status: "pending" as const,
+    eaters: allProfileIds,
   }));
 
   // Generate chore slots from chore_definitions

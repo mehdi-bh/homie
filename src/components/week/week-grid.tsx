@@ -16,6 +16,7 @@ type DayData = {
     cookColor: string;
     cookId: string;
     note: string | null;
+    recipeName: string | null;
     status: string;
     eaterCount: number;
   } | null;
@@ -25,7 +26,9 @@ type DayData = {
     cookName: string;
     cookColor: string;
     cookId: string;
+    recipeName: string | null;
     status: string;
+    eaterCount: number;
   } | null;
   chores: Array<{
     name: string;
@@ -107,6 +110,7 @@ export function WeekGrid({
                         {l.cookId === currentUserId
                           ? "Toi"
                           : l.cookName.split(" ")[0]}
+                        {l.recipeName ? ` — ${l.recipeName}` : ""}
                       </p>
                     </div>
                   </>
@@ -127,7 +131,7 @@ export function WeekGrid({
                     <UserAvatar src={d.cookAvatarUrl} fallback={d.cookEmoji} size="sm" />
                     <div className="flex-1 min-w-0 text-left">
                       <p className="text-[10px] text-muted-foreground leading-none mb-0.5">
-                        Diner
+                        Souper
                       </p>
                       <p
                         className="text-xs font-medium truncate"
@@ -136,13 +140,13 @@ export function WeekGrid({
                         {d.cookId === currentUserId
                           ? "Toi"
                           : d.cookName.split(" ")[0]}
-                        {d.note ? ` — ${d.note}` : ""}
+                        {d.recipeName ? ` — ${d.recipeName}` : d.note ? ` — ${d.note}` : ""}
                       </p>
                     </div>
                   </>
                 ) : (
                   <span className="text-xs text-muted-foreground">
-                    {d?.status === "skipped" ? "Diner — passe" : "Diner"}
+                    {d?.status === "skipped" ? "Souper — passe" : "Souper"}
                   </span>
                 )}
               </button>

@@ -2,14 +2,13 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { format, addWeeks, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowRight, Sun, Moon, AlertCircle } from "lucide-react";
+import { ArrowRight, Sun, Moon, AlertCircle, ShoppingCart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getWeekMonday, getWeekDates, toDateString } from "@/lib/rotation";
 import { GenerateWeekButton } from "@/components/dashboard/generate-week-button";
 import { MiniWeekPreview } from "@/components/dashboard/mini-week-preview";
 import { ChoreChecklist } from "@/components/dashboard/chore-checklist";
 import { UserAvatar } from "@/components/shared/user-avatar";
-import { cn } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -20,7 +19,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, avatar_emoji, avatar_url, default_lunch")
+    .select("display_name, avatar_emoji, avatar_url")
     .eq("id", user.id)
     .single();
 
@@ -31,7 +30,6 @@ export default async function DashboardPage() {
   const tomorrowStr = toDateString(addDays(today, 1));
   const todayLabel = format(today, "EEEE d MMMM", { locale: fr });
 
-  // Get current and next week
   const monday = getWeekMonday();
   const weekStartStr = toDateString(monday);
   const nextMonday = addWeeks(monday, 1);
@@ -53,7 +51,6 @@ export default async function DashboardPage() {
   const hasCurrentWeek = currentWeek?.generated;
   const hasNextWeek = nextWeek?.generated;
 
-  // Fetch today's data in parallel (only if week exists)
   type ProfileInfo = {
     id: string;
     display_name: string;
@@ -65,6 +62,7 @@ export default async function DashboardPage() {
   let myChores: Array<{ id: string; chore_name: string; status: string; due_date: string | null }> = [];
   let todayDinner: {
     note: string | null;
+    recipe_name: string | null;
     status: string;
     eaters: string[];
     cook: ProfileInfo;
@@ -73,14 +71,18 @@ export default async function DashboardPage() {
   let todayLunch: {
     cook: ProfileInfo;
     isCook: boolean;
-    myPreference: string | null;
-    eating: boolean;
+    recipe_name: string | null;
+    eaters: string[];
   } | null = null;
   let tomorrowCookDinner = false;
   let tomorrowCookLunch = false;
   let pendingActions: Array<{ text: string; href: string }> = [];
 
-  // Mini week data
+  // Grocery data
+  let groceryItemCount = 0;
+  let groceryUrgentCount = 0;
+  let groceryDutyUserId: string | null = null;
+
   type MiniDay = {
     date: string;
     dinnerCook: ProfileInfo | null;
@@ -99,6 +101,8 @@ export default async function DashboardPage() {
       { data: allLunches },
       { data: tomorrowDinnerData },
       { data: tomorrowLunchData },
+      { data: groceryItems },
+      { data: grocerySlot },
     ] = await Promise.all([
       supabase
         .from("chore_slots")
@@ -109,7 +113,7 @@ export default async function DashboardPage() {
       supabase
         .from("dinner_slots")
         .select(
-          "note, status, eaters, cook_id, cook:profiles!dinner_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)"
+          "note, status, eaters, cook_id, recipe:recipes!dinner_slots_recipe_id_fkey(name), cook:profiles!dinner_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)"
         )
         .eq("week_id", currentWeek!.id)
         .eq("date", todayStr)
@@ -117,12 +121,11 @@ export default async function DashboardPage() {
       supabase
         .from("lunch_slots")
         .select(
-          "id, cook_id, cook:profiles!lunch_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)"
+          "id, cook_id, eaters, recipe:recipes!lunch_slots_recipe_id_fkey(name), cook:profiles!lunch_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)"
         )
         .eq("week_id", currentWeek!.id)
         .eq("date", todayStr)
         .single(),
-      // All dinners for mini week
       supabase
         .from("dinner_slots")
         .select(
@@ -130,7 +133,6 @@ export default async function DashboardPage() {
         )
         .eq("week_id", currentWeek!.id)
         .order("date"),
-      // All lunches for mini week
       supabase
         .from("lunch_slots")
         .select(
@@ -138,29 +140,45 @@ export default async function DashboardPage() {
         )
         .eq("week_id", currentWeek!.id)
         .order("date"),
-      // Tomorrow's dinner
       supabase
         .from("dinner_slots")
         .select("cook_id")
         .eq("week_id", currentWeek!.id)
         .eq("date", tomorrowStr)
         .single(),
-      // Tomorrow's lunch
       supabase
         .from("lunch_slots")
         .select("cook_id")
         .eq("week_id", currentWeek!.id)
         .eq("date", tomorrowStr)
         .single(),
+      supabase
+        .from("grocery_items")
+        .select("id, priority")
+        .eq("week_id", currentWeek!.id)
+        .eq("archived", false)
+        .eq("checked", false),
+      supabase
+        .from("grocery_slots")
+        .select("assigned_to")
+        .eq("week_id", currentWeek!.id)
+        .single(),
     ]);
 
     myChores = choresData ?? [];
+
+    // Grocery
+    const uncheckedItems = groceryItems ?? [];
+    groceryItemCount = uncheckedItems.length;
+    groceryUrgentCount = uncheckedItems.filter((i) => i.priority === "urgent").length;
+    groceryDutyUserId = grocerySlot?.assigned_to ?? null;
 
     // Today's dinner
     if (dinnerData) {
       const cook = dinnerData.cook as unknown as ProfileInfo;
       todayDinner = {
         note: dinnerData.note,
+        recipe_name: (dinnerData.recipe as unknown as { name: string } | null)?.name ?? null,
         status: dinnerData.status,
         eaters: (dinnerData.eaters ?? []) as string[],
         cook,
@@ -168,24 +186,14 @@ export default async function DashboardPage() {
       };
     }
 
-    // Today's lunch
+    // Today's lunch (new model - recipe + eaters)
     if (lunchData) {
       const cook = lunchData.cook as unknown as ProfileInfo;
-      const { data: prefData } = await supabase
-        .from("lunch_preferences")
-        .select("preference, eating")
-        .eq("lunch_slot_id", lunchData.id)
-        .eq("user_id", user.id)
-        .single();
-
-      const isEating = prefData?.eating ?? true;
       todayLunch = {
         cook,
         isCook: lunchData.cook_id === user.id,
-        myPreference: isEating
-          ? (prefData?.preference ?? profile?.default_lunch ?? null)
-          : null,
-        eating: isEating,
+        recipe_name: (lunchData.recipe as unknown as { name: string } | null)?.name ?? null,
+        eaters: (lunchData.eaters ?? []) as string[],
       };
     }
 
@@ -222,7 +230,7 @@ export default async function DashboardPage() {
     // Pending actions
     if (tomorrowCookDinner) {
       pendingActions.push({
-        text: "Tu cuisines le diner demain",
+        text: "Tu cuisines le souper demain",
         href: "/dinner",
       });
     }
@@ -238,6 +246,14 @@ export default async function DashboardPage() {
       pendingActions.push({
         text: `${pendingChores.length} tache${pendingChores.length > 1 ? "s" : ""} a faire`,
         href: "/chores",
+      });
+    }
+
+    // Grocery duty action
+    if (groceryDutyUserId === user.id && groceryItemCount > 0) {
+      pendingActions.push({
+        text: `${groceryItemCount} article${groceryItemCount > 1 ? "s" : ""} a acheter`,
+        href: "/grocery",
       });
     }
   }
@@ -321,7 +337,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Meals */}
+      {/* Meals + Grocery */}
       <div className="grid grid-cols-2 gap-3">
         {/* Lunch */}
         <Link href="/lunch" className="block">
@@ -342,12 +358,10 @@ export default async function DashboardPage() {
                     {todayLunch.isCook ? "Toi" : todayLunch.cook.display_name.split(" ")[0]}
                   </span>
                 </div>
-                {todayLunch.eating && todayLunch.myPreference && (
-                  <p className="text-xs text-muted-foreground truncate">{todayLunch.myPreference}</p>
-                )}
-                {!todayLunch.eating && (
-                  <p className="text-xs text-muted-foreground">Pas la</p>
-                )}
+                <p className="text-xs text-muted-foreground truncate">
+                  {todayLunch.recipe_name ?? "Pas encore decide"}
+                  {` · ${todayLunch.eaters.length} pers.`}
+                </p>
               </div>
             )}
           </div>
@@ -358,7 +372,7 @@ export default async function DashboardPage() {
           <div className="rounded-xl border p-3 transition-colors active:bg-muted/50 space-y-2.5">
             <div className="flex items-center gap-1.5">
               <Moon className="h-3.5 w-3.5 text-indigo-400" />
-              <span className="text-xs font-medium text-indigo-500">Diner</span>
+              <span className="text-xs font-medium text-indigo-500">Souper</span>
             </div>
             {!hasCurrentWeek ? (
               <p className="text-xs text-muted-foreground">Pas de semaine</p>
@@ -375,7 +389,7 @@ export default async function DashboardPage() {
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground truncate">
-                  {todayDinner.note ?? "Pas encore decide"}
+                  {todayDinner.recipe_name ?? todayDinner.note ?? "Pas encore decide"}
                   {` · ${todayDinner.eaters.length} pers.`}
                 </p>
               </div>
@@ -383,6 +397,31 @@ export default async function DashboardPage() {
           </div>
         </Link>
       </div>
+
+      {/* Grocery card */}
+      {hasCurrentWeek && (
+        <Link href="/grocery" className="block">
+          <div className="rounded-xl border p-3 transition-colors active:bg-muted/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium">Epicerie</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {groceryUrgentCount > 0 && (
+                  <span className="text-[10px] font-medium text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full dark:bg-amber-900/30">
+                    {groceryUrgentCount} urgent
+                  </span>
+                )}
+                <span className="text-xs text-muted-foreground">
+                  {groceryItemCount} article{groceryItemCount !== 1 ? "s" : ""}
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+            </div>
+          </div>
+        </Link>
+      )}
 
       {/* Mini week preview */}
       {(miniWeek || nextMiniWeek) && (

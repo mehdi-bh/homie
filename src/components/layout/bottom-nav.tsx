@@ -6,11 +6,11 @@ import { Home, Calendar, ShoppingCart, UtensilsCrossed, Car } from "lucide-react
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { href: "/dashboard", label: "Today", icon: Home },
-  { href: "/week", label: "Week", icon: Calendar },
-  { href: "/grocery", label: "Grocery", icon: ShoppingCart },
-  { href: "/dinner", label: "Meals", icon: UtensilsCrossed },
-  { href: "/car", label: "Car", icon: Car },
+  { href: "/dashboard", label: "Accueil", icon: Home },
+  { href: "/week", label: "Semaine", icon: Calendar },
+  { href: "/grocery", label: "Epicerie", icon: ShoppingCart },
+  { href: "/dinner", label: "Repas", icon: UtensilsCrossed },
+  { href: "/car", label: "Auto", icon: Car },
 ] as const;
 
 export function BottomNav() {
