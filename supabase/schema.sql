@@ -157,20 +157,42 @@ create unique index lunch_preferences_slot_user on lunch_preferences(lunch_slot_
 create trigger lunch_preferences_updated_at before update on lunch_preferences
   for each row execute function update_updated_at();
 
+-- chore_definitions
+create table chore_definitions (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  icon text not null default '🧹',
+  frequency text[] not null default '{weekly}',
+  assignment_mode text not null default 'rotation'
+    check (assignment_mode in ('rotation', 'fixed', 'custom')),
+  rotation uuid[] not null default '{}',
+  rotation_offset smallint not null default 0,
+  day_assignments jsonb not null default '{}',
+  sort_order smallint not null default 0,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create trigger chore_definitions_updated_at before update on chore_definitions
+  for each row execute function update_updated_at();
+
 -- chore_slots
 create table chore_slots (
   id uuid primary key default gen_random_uuid(),
   week_id uuid not null references weeks(id) on delete cascade,
   chore_name text not null,
+  chore_definition_id uuid references chore_definitions(id),
   assigned_to uuid references profiles(id),
   status text not null default 'pending' check (status in ('pending', 'done', 'skipped')),
   completed_at timestamptz,
+  due_date date,
   note text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create unique index chore_slots_week_chore on chore_slots(week_id, chore_name);
+create unique index chore_slots_week_definition on chore_slots(week_id, chore_definition_id, due_date);
 
 create trigger chore_slots_updated_at before update on chore_slots
   for each row execute function update_updated_at();
@@ -281,6 +303,7 @@ alter table recipe_ingredients enable row level security;
 alter table dinner_slots enable row level security;
 alter table lunch_slots enable row level security;
 alter table lunch_preferences enable row level security;
+alter table chore_definitions enable row level security;
 alter table chore_slots enable row level security;
 alter table grocery_slots enable row level security;
 alter table grocery_items enable row level security;
@@ -296,7 +319,7 @@ begin
   for tbl in
     select unnest(array[
       'profiles', 'household_settings', 'weeks', 'recipes', 'recipe_ingredients',
-      'dinner_slots', 'lunch_slots', 'lunch_preferences', 'chore_slots',
+      'dinner_slots', 'lunch_slots', 'lunch_preferences', 'chore_definitions', 'chore_slots',
       'grocery_slots', 'grocery_items', 'car_reservations', 'swaps', 'push_subscriptions'
     ])
   loop
@@ -368,6 +391,7 @@ alter publication supabase_realtime add table grocery_items;
 alter publication supabase_realtime add table dinner_slots;
 alter publication supabase_realtime add table lunch_slots;
 alter publication supabase_realtime add table lunch_preferences;
+alter publication supabase_realtime add table chore_definitions;
 alter publication supabase_realtime add table chore_slots;
 alter publication supabase_realtime add table car_reservations;
 alter publication supabase_realtime add table swaps;
@@ -378,18 +402,10 @@ alter publication supabase_realtime add table swaps;
 -- Replace these UUIDs with actual auth.users IDs after creating users in Supabase Dashboard.
 -- Create 3 users in Dashboard > Auth > Users first, then copy their UUIDs here.
 
--- INSERT INTO profiles (id, display_name, color, avatar_emoji, default_lunch) VALUES
---   ('REPLACE-UUID-1', 'Mehdi', '#4f46e5', '👨‍💻', 'Riz + poulet'),
---   ('REPLACE-UUID-2', 'Romane', '#ec4899', '👩‍🎨', 'Salade + oeufs'),
---   ('REPLACE-UUID-3', 'Eliot', '#10b981', '🧑‍🎤', 'Pates + sauce tomate');
+INSERT INTO profiles (id, display_name, color, avatar_emoji, default_lunch) VALUES
+  ('afe0c263-d90b-4501-8379-a46d0a00b075', 'Mehdi', '#4f46e5', '👨‍💻', 'Riz + poulet'),
+  ('214795d8-4a5a-402d-ae45-11ff6bdc75c7', 'Romane', '#ec4899', '👩‍🎨', 'Salade + oeufs'),
+  ('c79bbf29-a117-4cd2-98be-c09f55736329', 'Eliot', '#10b981', '🧑‍🎤', 'Pates + sauce tomate');
 
--- INSERT INTO household_settings (
---   dinner_rotation, lunch_rotation, grocery_rotation,
---   chore_rotations, current_week_offset
--- ) VALUES (
---   ARRAY['REPLACE-UUID-1'::uuid, 'REPLACE-UUID-2'::uuid, 'REPLACE-UUID-3'::uuid],
---   ARRAY['REPLACE-UUID-1'::uuid, 'REPLACE-UUID-2'::uuid, 'REPLACE-UUID-3'::uuid],
---   ARRAY['REPLACE-UUID-1'::uuid, 'REPLACE-UUID-2'::uuid, 'REPLACE-UUID-3'::uuid],
---   '{"aspirateur": ["REPLACE-UUID-1", "REPLACE-UUID-2", "REPLACE-UUID-3"], "cuisine": ["REPLACE-UUID-2", "REPLACE-UUID-3", "REPLACE-UUID-1"], "salle_de_bain": ["REPLACE-UUID-3", "REPLACE-UUID-1", "REPLACE-UUID-2"], "poubelles": ["REPLACE-UUID-1", "REPLACE-UUID-3", "REPLACE-UUID-2"]}'::jsonb,
---   '{"dinner": 0, "lunch": 0, "grocery": 0, "aspirateur": 0, "cuisine": 0, "salle_de_bain": 0, "poubelles": 0}'::jsonb
--- );
+-- household_settings is auto-created by the app on first use (see src/lib/household-settings.ts)
+-- Chores are now managed via chore_definitions table from the UI
