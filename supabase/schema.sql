@@ -24,6 +24,7 @@ create table profiles (
   display_name text not null,
   color text not null default '#4f46e5',
   avatar_emoji text not null default '🏠',
+  avatar_url text,
   default_lunch text,
   notify_daily boolean not null default true,
   notify_deadline boolean not null default true,
@@ -409,3 +410,28 @@ INSERT INTO profiles (id, display_name, color, avatar_emoji, default_lunch) VALU
 
 -- household_settings is auto-created by the app on first use (see src/lib/household-settings.ts)
 -- Chores are now managed via chore_definitions table from the UI
+
+-- ============================================================================
+-- STORAGE: Avatars bucket
+-- ============================================================================
+
+INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true);
+
+create policy "Anyone can view avatars"
+  on storage.objects for select
+  using (bucket_id = 'avatars');
+
+create policy "Authenticated users can upload avatars"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'avatars');
+
+create policy "Authenticated users can update avatars"
+  on storage.objects for update
+  to authenticated
+  using (bucket_id = 'avatars');
+
+create policy "Authenticated users can delete avatars"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'avatars');

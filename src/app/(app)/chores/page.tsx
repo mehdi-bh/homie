@@ -35,6 +35,7 @@ export default async function ChoresPage() {
       display_name: string;
       color: string;
       avatar_emoji: string;
+      avatar_url: string | null;
     };
   }> = [];
 
@@ -42,7 +43,7 @@ export default async function ChoresPage() {
     const { data } = await supabase
       .from("chore_slots")
       .select(
-        "id, chore_name, status, completed_at, note, due_date, assigned_to:profiles!chore_slots_assigned_to_fkey(id, display_name, color, avatar_emoji)"
+        "id, chore_name, status, completed_at, note, due_date, assigned_to:profiles!chore_slots_assigned_to_fkey(id, display_name, color, avatar_emoji, avatar_url)"
       )
       .eq("week_id", week.id)
       .order("due_date", { ascending: true, nullsFirst: true })
@@ -58,6 +59,7 @@ export default async function ChoresPage() {
           display_name: string;
           color: string;
           avatar_emoji: string;
+          avatar_url: string | null;
         },
       }));
     }

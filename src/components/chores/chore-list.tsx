@@ -5,6 +5,7 @@ import { Check, RotateCcw } from "lucide-react";
 import { format, isToday, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { createClient } from "@/lib/supabase/client";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn } from "@/lib/utils";
 
 type ChoreSlot = {
@@ -19,6 +20,7 @@ type ChoreSlot = {
     display_name: string;
     color: string;
     avatar_emoji: string;
+    avatar_url: string | null;
   };
 };
 
@@ -158,8 +160,8 @@ export function ChoreList({
                   >
                     {chore.chore_name}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    {chore.assigned_to.avatar_emoji}{" "}
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <UserAvatar src={chore.assigned_to.avatar_url} fallback={chore.assigned_to.avatar_emoji} size="sm" />
                     {chore.assigned_to.display_name}
                     {isMine && (
                       <span className="ml-1 text-xs opacity-60">(you)</span>

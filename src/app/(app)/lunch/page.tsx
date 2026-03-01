@@ -35,7 +35,7 @@ export default async function LunchPage({
 
   const { data: profilesData } = await supabase
     .from("profiles")
-    .select("id, display_name, color, avatar_emoji, default_lunch")
+    .select("id, display_name, color, avatar_emoji, avatar_url, default_lunch")
     .order("display_name");
 
   const profiles: Profile[] = (profilesData ?? []).map((p) => ({
@@ -49,7 +49,7 @@ export default async function LunchPage({
     const { data: lunchData } = await supabase
       .from("lunch_slots")
       .select(
-        "id, date, status, note, cook_id, cook:profiles!lunch_slots_cook_id_fkey(id, display_name, color, avatar_emoji)"
+        "id, date, status, note, cook_id, cook:profiles!lunch_slots_cook_id_fkey(id, display_name, color, avatar_emoji, avatar_url)"
       )
       .eq("week_id", week.id)
       .order("date");

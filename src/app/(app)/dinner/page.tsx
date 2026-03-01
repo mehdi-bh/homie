@@ -34,7 +34,7 @@ export default async function DinnerPage({
 
   const { data: profilesData } = await supabase
     .from("profiles")
-    .select("id, display_name, color, avatar_emoji")
+    .select("id, display_name, color, avatar_emoji, avatar_url")
     .order("display_name");
 
   const profiles = profilesData ?? [];
@@ -45,7 +45,7 @@ export default async function DinnerPage({
     const { data: dinnerData } = await supabase
       .from("dinner_slots")
       .select(
-        "id, date, status, note, eaters, cook_id, cook:profiles!dinner_slots_cook_id_fkey(id, display_name, color, avatar_emoji)"
+        "id, date, status, note, eaters, cook_id, cook:profiles!dinner_slots_cook_id_fkey(id, display_name, color, avatar_emoji, avatar_url)"
       )
       .eq("week_id", week.id)
       .order("date");

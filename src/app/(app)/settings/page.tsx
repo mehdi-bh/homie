@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader } from "@/components/layout/page-header";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,12 +21,13 @@ const COLORS = [
   "#06b6d4", // cyan
 ];
 
-const AVATARS = ["👨‍💻", "👩‍🎨", "🧑‍🎤", "🏠", "🍳", "🎮", "🌈", "🐱"];
+const AVATARS = ["\u{1F468}\u200D\u{1F4BB}", "\u{1F469}\u200D\u{1F3A8}", "\u{1F9D1}\u200D\u{1F3A4}", "\u{1F3E0}", "\u{1F373}", "\u{1F3AE}", "\u{1F308}", "\u{1F431}"];
 
 interface Profile {
   display_name: string;
   color: string;
   avatar_emoji: string;
+  avatar_url: string | null;
   default_lunch: string;
   notify_daily: boolean;
   notify_deadline: boolean;
@@ -35,8 +37,11 @@ interface Profile {
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function load() {
@@ -44,9 +49,11 @@ export default function SettingsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      setUserId(user.id);
+
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, color, avatar_emoji, default_lunch, notify_daily, notify_deadline, notify_grocery, notify_chores")
+        .select("display_name, color, avatar_emoji, avatar_url, default_lunch, notify_daily, notify_deadline, notify_grocery, notify_chores")
         .eq("id", user.id)
         .single();
 
@@ -55,18 +62,42 @@ export default function SettingsPage() {
     load();
   }, []);
 
-  async function handleSave() {
-    if (!profile) return;
-    setSaving(true);
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
 
+    setUploading(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const path = `${userId}.jpg`;
+
+    await supabase.storage.from("avatars").upload(path, file, {
+      upsert: true,
+      contentType: file.type,
+    });
+
+    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+    const avatarUrl = `${publicUrl}?t=${Date.now()}`;
 
     await supabase
       .from("profiles")
-      .update(profile)
-      .eq("id", user.id);
+      .update({ avatar_url: avatarUrl })
+      .eq("id", userId);
+
+    setProfile((p) => (p ? { ...p, avatar_url: avatarUrl } : p));
+    setUploading(false);
+  }
+
+  async function handleSave() {
+    if (!profile || !userId) return;
+    setSaving(true);
+
+    const supabase = createClient();
+    const { avatar_url: _, ...profileData } = profile;
+
+    await supabase
+      .from("profiles")
+      .update(profileData)
+      .eq("id", userId);
 
     setSaving(false);
     setSaved(true);
@@ -112,7 +143,53 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-2">
-          <Label>Avatar</Label>
+          <Label>Photo</Label>
+          <div className="flex items-center gap-4">
+            <UserAvatar
+              src={profile.avatar_url}
+              fallback={profile.avatar_emoji}
+              size="lg"
+            />
+            <div className="space-y-1">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="text-sm font-medium text-primary hover:underline disabled:opacity-50"
+              >
+                {uploading ? "Uploading..." : profile.avatar_url ? "Change photo" : "Upload photo"}
+              </button>
+              {profile.avatar_url && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!userId) return;
+                    const supabase = createClient();
+                    await supabase.storage.from("avatars").remove([`${userId}.jpg`]);
+                    await supabase
+                      .from("profiles")
+                      .update({ avatar_url: null })
+                      .eq("id", userId);
+                    setProfile((p) => (p ? { ...p, avatar_url: null } : p));
+                  }}
+                  className="block text-xs text-muted-foreground hover:text-destructive"
+                >
+                  Remove photo
+                </button>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoUpload}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Avatar emoji (fallback)</Label>
           <div className="flex gap-2 flex-wrap">
             {AVATARS.map((a) => (
               <button

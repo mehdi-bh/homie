@@ -5,6 +5,7 @@ import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { createClient } from "@/lib/supabase/client";
 import { toDateString } from "@/lib/rotation";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn } from "@/lib/utils";
 
 type Profile = {
@@ -12,6 +13,7 @@ type Profile = {
   display_name: string;
   color: string;
   avatar_emoji: string;
+  avatar_url: string | null;
 };
 
 export type DinnerSlot = {
@@ -115,8 +117,9 @@ export function DinnerSlotList({
             <div className="flex items-center justify-between mb-2">
               <div>
                 <p className="font-medium capitalize text-sm">{dayLabel}</p>
-                <p className="text-xs text-muted-foreground">
-                  {slot.cook.avatar_emoji} {slot.cook.display_name}
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <UserAvatar src={slot.cook.avatar_url} fallback={slot.cook.avatar_emoji} size="sm" />
+                  {slot.cook.display_name}
                   {isCook && <span className="opacity-60"> (toi)</span>}
                 </p>
               </div>
@@ -208,7 +211,7 @@ export function DinnerSlotList({
                         }}
                         title={`${profile.display_name} ${isEating ? "mange" : "ne mange pas"}`}
                       >
-                        {profile.avatar_emoji}
+                        <UserAvatar src={profile.avatar_url} fallback={profile.avatar_emoji} size="sm" />
                       </button>
                     );
                   })}

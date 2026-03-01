@@ -6,6 +6,7 @@ import { fr } from "date-fns/locale";
 import { Check, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toDateString } from "@/lib/rotation";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn } from "@/lib/utils";
 
 export type Profile = {
@@ -13,6 +14,7 @@ export type Profile = {
   display_name: string;
   color: string;
   avatar_emoji: string;
+  avatar_url: string | null;
   default_lunch: string | null;
 };
 
@@ -36,6 +38,7 @@ export type LunchSlot = {
     display_name: string;
     color: string;
     avatar_emoji: string;
+    avatar_url: string | null;
   };
   preferences: LunchPreference[];
 };
@@ -106,8 +109,9 @@ export function LunchDayList({
             <div className="flex items-center justify-between mb-3">
               <div>
                 <p className="font-medium capitalize text-sm">{dayLabel}</p>
-                <p className="text-xs text-muted-foreground">
-                  {slot.cook.avatar_emoji} {slot.cook.display_name} cuisine
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <UserAvatar src={slot.cook.avatar_url} fallback={slot.cook.avatar_emoji} size="sm" />
+                  {slot.cook.display_name} cuisine
                   {isCook && <span className="opacity-60"> (toi)</span>}
                 </p>
               </div>
@@ -139,9 +143,7 @@ export function LunchDayList({
                       isMe && eating && !isPast && "bg-muted/50"
                     )}
                   >
-                    <span className="text-sm shrink-0">
-                      {profile.avatar_emoji}
-                    </span>
+                    <UserAvatar src={profile.avatar_url} fallback={profile.avatar_emoji} size="sm" />
 
                     <div className="flex-1 min-w-0">
                       {isEditing ? (
