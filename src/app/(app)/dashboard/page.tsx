@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { format, addWeeks, addDays, parseISO } from "date-fns";
+import { format, addWeeks, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ArrowRight, ListChecks, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getWeekMonday, getWeekDates, toDateString } from "@/lib/rotation";
 import { Card, CardContent } from "@/components/ui/card";
 import { GenerateWeekButton } from "@/components/dashboard/generate-week-button";
+import { MiniWeekPreview } from "@/components/dashboard/mini-week-preview";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn } from "@/lib/utils";
 
@@ -80,12 +81,14 @@ export default async function DashboardPage() {
   let pendingActions: Array<{ text: string; href: string }> = [];
 
   // Mini week data
-  let miniWeek: Array<{
+  type MiniDay = {
     date: string;
     dinnerCook: ProfileInfo | null;
     dinnerStatus: string | null;
     lunchCook: ProfileInfo | null;
-  }> = [];
+  };
+  let miniWeek: MiniDay[] | null = null;
+  let nextMiniWeek: MiniDay[] | null = null;
 
   if (hasCurrentWeek) {
     const [
@@ -191,27 +194,30 @@ export default async function DashboardPage() {
     tomorrowCookLunch = tomorrowLunchData?.cook_id === user.id;
 
     // Build mini week
-    const dates = getWeekDates(monday);
-    const dinnerMap = new Map<string, { cook: unknown; status: string; cook_id: string | null }>();
-    for (const d of allDinners ?? []) {
-      dinnerMap.set(d.date, d);
-    }
-    const lunchMap = new Map<string, { cook: unknown; cook_id: string | null }>();
-    for (const l of allLunches ?? []) {
-      lunchMap.set(l.date, l);
+    function buildMiniWeek(
+      dates: Date[],
+      dinners: typeof allDinners,
+      lunches: typeof allLunches
+    ): MiniDay[] {
+      const dinnerMap = new Map<string, { cook: unknown; status: string; cook_id: string | null }>();
+      for (const d of dinners ?? []) dinnerMap.set(d.date, d);
+      const lunchMap = new Map<string, { cook: unknown; cook_id: string | null }>();
+      for (const l of lunches ?? []) lunchMap.set(l.date, l);
+
+      return dates.map((date) => {
+        const dateStr = toDateString(date);
+        const d = dinnerMap.get(dateStr);
+        const l = lunchMap.get(dateStr);
+        return {
+          date: dateStr,
+          dinnerCook: d ? (d.cook as unknown as ProfileInfo) : null,
+          dinnerStatus: d ? d.status : null,
+          lunchCook: l ? (l.cook as unknown as ProfileInfo) : null,
+        };
+      });
     }
 
-    miniWeek = dates.map((date) => {
-      const dateStr = toDateString(date);
-      const d = dinnerMap.get(dateStr);
-      const l = lunchMap.get(dateStr);
-      return {
-        date: dateStr,
-        dinnerCook: d ? (d.cook as unknown as ProfileInfo) : null,
-        dinnerStatus: d ? d.status : null,
-        lunchCook: l ? (l.cook as unknown as ProfileInfo) : null,
-      };
-    });
+    miniWeek = buildMiniWeek(getWeekDates(monday), allDinners, allLunches);
 
     // Pending actions
     if (tomorrowCookDinner) {
@@ -234,6 +240,44 @@ export default async function DashboardPage() {
         href: "/chores",
       });
     }
+  }
+
+  // Fetch next week mini data
+  if (hasNextWeek) {
+    const [{ data: nextDinners }, { data: nextLunches }] = await Promise.all([
+      supabase
+        .from("dinner_slots")
+        .select(
+          "date, status, cook_id, cook:profiles!dinner_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)"
+        )
+        .eq("week_id", nextWeek!.id)
+        .order("date"),
+      supabase
+        .from("lunch_slots")
+        .select(
+          "date, cook_id, cook:profiles!lunch_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)"
+        )
+        .eq("week_id", nextWeek!.id)
+        .order("date"),
+    ]);
+
+    const nextDates = getWeekDates(nextMonday);
+    const dinnerMap = new Map<string, { cook: unknown; status: string; cook_id: string | null }>();
+    for (const d of nextDinners ?? []) dinnerMap.set(d.date, d);
+    const lunchMap = new Map<string, { cook: unknown; cook_id: string | null }>();
+    for (const l of nextLunches ?? []) lunchMap.set(l.date, l);
+
+    nextMiniWeek = nextDates.map((date) => {
+      const dateStr = toDateString(date);
+      const d = dinnerMap.get(dateStr);
+      const l = lunchMap.get(dateStr);
+      return {
+        date: dateStr,
+        dinnerCook: d ? (d.cook as unknown as ProfileInfo) : null,
+        dinnerStatus: d ? d.status : null,
+        lunchCook: l ? (l.cook as unknown as ProfileInfo) : null,
+      };
+    });
   }
 
   return (
@@ -395,84 +439,12 @@ export default async function DashboardPage() {
       </div>
 
       {/* Mini week preview */}
-      {hasCurrentWeek && miniWeek.length > 0 && (
-        <Link href="/week" className="block">
-          <div className="rounded-xl border p-3 transition-colors active:bg-muted/50">
-            <div className="flex items-center justify-between mb-2.5">
-              <p className="text-xs font-medium text-muted-foreground">
-                Cette semaine
-              </p>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-            </div>
-            {/* Day headers */}
-            <div className="grid grid-cols-[auto_repeat(7,1fr)] gap-x-1 items-center">
-              <div />
-              {miniWeek.map((day) => {
-                const isToday = day.date === todayStr;
-                const parsed = parseISO(day.date);
-                const dayLetter = format(parsed, "EEEEE", { locale: fr });
-                return (
-                  <span
-                    key={day.date}
-                    className={cn(
-                      "text-[10px] uppercase text-center",
-                      isToday ? "text-primary font-semibold" : "text-muted-foreground"
-                    )}
-                  >
-                    {dayLetter}
-                  </span>
-                );
-              })}
-
-              {/* Lunch row */}
-              <span className="text-[10px] text-muted-foreground pr-1.5">Dej.</span>
-              {miniWeek.map((day) => {
-                const isToday = day.date === todayStr;
-                const isPast = day.date < todayStr;
-                return (
-                  <div
-                    key={day.date + "-l"}
-                    className={cn(
-                      "flex justify-center py-0.5 rounded-t-md",
-                      isToday && "bg-primary/10",
-                      isPast && "opacity-40"
-                    )}
-                  >
-                    {day.lunchCook ? (
-                      <UserAvatar src={day.lunchCook.avatar_url} fallback={day.lunchCook.avatar_emoji} size="sm" className="h-5 w-5 text-sm" />
-                    ) : (
-                      <span className="text-sm leading-none">&middot;</span>
-                    )}
-                  </div>
-                );
-              })}
-
-              {/* Dinner row */}
-              <span className="text-[10px] text-muted-foreground pr-1.5">Diner</span>
-              {miniWeek.map((day) => {
-                const isToday = day.date === todayStr;
-                const isPast = day.date < todayStr;
-                const isSkipped = day.dinnerStatus === "skipped";
-                return (
-                  <div
-                    key={day.date + "-d"}
-                    className={cn(
-                      "flex justify-center py-0.5 rounded-b-md",
-                      isToday && "bg-primary/10",
-                      isPast && "opacity-40"
-                    )}
-                  >
-                    {day.dinnerCook ? (
-                      <UserAvatar src={day.dinnerCook.avatar_url} fallback={day.dinnerCook.avatar_emoji} size="sm" className={cn("h-5 w-5 text-sm", isSkipped && "opacity-30")} />
-                    ) : (
-                      <span className="text-sm leading-none">&middot;</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </Link>
+      {(miniWeek || nextMiniWeek) && (
+        <MiniWeekPreview
+          currentWeek={miniWeek}
+          nextWeek={nextMiniWeek}
+          todayStr={todayStr}
+        />
       )}
 
       {/* Week generation */}
