@@ -27,7 +27,7 @@ export type DinnerSlot = {
 };
 
 export function DinnerSlotList({
-  slots,
+  slots: initialSlots,
   profiles,
   currentUserId,
 }: {
@@ -35,22 +35,30 @@ export function DinnerSlotList({
   profiles: Profile[];
   currentUserId: string;
 }) {
+  const [slots, setSlots] = useState(initialSlots);
   const [editing, setEditing] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-  const [saving, setSaving] = useState<string | null>(null);
   const escapedRef = useRef(false);
+
+  // Sync with server data when props change (realtime refresh)
+  const slotsRef = useRef(initialSlots);
+  if (initialSlots !== slotsRef.current) {
+    slotsRef.current = initialSlots;
+    setSlots(initialSlots);
+  }
 
   const todayStr = toDateString(new Date());
 
   async function updateNote(slotId: string, note: string | null) {
-    setSaving(slotId);
+    setSlots((prev) =>
+      prev.map((s) => (s.id === slotId ? { ...s, note } : s))
+    );
+    setEditing(null);
     const supabase = createClient();
     await supabase
       .from("dinner_slots")
       .update({ note })
       .eq("id", slotId);
-    setSaving(null);
-    setEditing(null);
   }
 
   async function toggleEater(
@@ -58,27 +66,31 @@ export function DinnerSlotList({
     currentEaters: string[],
     userId: string
   ) {
-    setSaving(slotId);
-    const supabase = createClient();
     const newEaters = currentEaters.includes(userId)
       ? currentEaters.filter((id) => id !== userId)
       : [...currentEaters, userId];
+    setSlots((prev) =>
+      prev.map((s) => (s.id === slotId ? { ...s, eaters: newEaters } : s))
+    );
+    const supabase = createClient();
     await supabase
       .from("dinner_slots")
       .update({ eaters: newEaters })
       .eq("id", slotId);
-    setSaving(null);
   }
 
   async function toggleSkip(slotId: string, currentStatus: string) {
-    setSaving(slotId);
-    const supabase = createClient();
     const newStatus = currentStatus === "skipped" ? "pending" : "skipped";
+    setSlots((prev) =>
+      prev.map((s) =>
+        s.id === slotId ? { ...s, status: newStatus as DinnerSlot["status"] } : s
+      )
+    );
+    const supabase = createClient();
     await supabase
       .from("dinner_slots")
       .update({ status: newStatus })
       .eq("id", slotId);
-    setSaving(null);
   }
 
   if (slots.length === 0) {
@@ -96,7 +108,6 @@ export function DinnerSlotList({
         const isPast = slot.date < todayStr;
         const isSkipped = slot.status === "skipped";
         const isCook = slot.cook_id === currentUserId;
-        const isSaving = saving === slot.id;
         const dayLabel = format(parseISO(slot.date), "EEEE d", { locale: fr });
 
         return (
@@ -196,10 +207,9 @@ export function DinnerSlotList({
                         key={profile.id}
                         onClick={() =>
                           !isPast &&
-                          !isSaving &&
                           toggleEater(slot.id, slot.eaters, profile.id)
                         }
-                        disabled={isPast || isSaving}
+                        disabled={isPast}
                         className={cn(
                           "h-9 w-9 rounded-full flex items-center justify-center text-sm transition-all border-2 active:scale-95",
                           isEating
@@ -227,7 +237,6 @@ export function DinnerSlotList({
               <div className="mt-3 flex justify-end">
                 <button
                   onClick={() => toggleSkip(slot.id, slot.status)}
-                  disabled={isSaving}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
                 >
                   {isSkipped ? "Retablir" : "Passer"}

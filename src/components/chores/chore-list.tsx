@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Check, RotateCcw } from "lucide-react";
 import { format, isToday, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -65,28 +65,42 @@ function groupChoresByDay(chores: ChoreSlot[]): GroupedChores[] {
 }
 
 export function ChoreList({
-  chores,
+  chores: initialChores,
   currentUserId,
 }: {
   chores: ChoreSlot[];
   currentUserId: string;
 }) {
-  const [loading, setLoading] = useState<string | null>(null);
+  const [chores, setChores] = useState(initialChores);
+
+  // Sync with server data when props change (realtime refresh)
+  const choresRef = useRef(initialChores);
+  if (initialChores !== choresRef.current) {
+    choresRef.current = initialChores;
+    setChores(initialChores);
+  }
 
   async function toggleChore(chore: ChoreSlot) {
-    setLoading(chore.id);
-    const supabase = createClient();
-
     const isDone = chore.status === "done";
+    const newStatus = isDone ? "pending" : "done";
+
+    // Optimistic update
+    setChores((prev) =>
+      prev.map((c) =>
+        c.id === chore.id
+          ? { ...c, status: newStatus as ChoreSlot["status"], completed_at: isDone ? null : new Date().toISOString() }
+          : c
+      )
+    );
+
+    const supabase = createClient();
     await supabase
       .from("chore_slots")
       .update({
-        status: isDone ? "pending" : "done",
+        status: newStatus,
         completed_at: isDone ? null : new Date().toISOString(),
       })
       .eq("id", chore.id);
-
-    setLoading(null);
   }
 
   if (chores.length === 0) {
@@ -120,7 +134,6 @@ export function ChoreList({
           {group.chores.map((chore) => {
             const isDone = chore.status === "done";
             const isMine = chore.assigned_to.id === currentUserId;
-            const isLoading = loading === chore.id;
 
             return (
               <div
@@ -136,7 +149,6 @@ export function ChoreList({
               >
                 <button
                   onClick={() => toggleChore(chore)}
-                  disabled={isLoading}
                   className={cn(
                     "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all active:scale-95",
                     isDone
@@ -144,11 +156,7 @@ export function ChoreList({
                       : "border-muted-foreground/30"
                   )}
                 >
-                  {isLoading ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  ) : isDone ? (
-                    <Check className="h-5 w-5" />
-                  ) : null}
+                  {isDone ? <Check className="h-5 w-5" /> : null}
                 </button>
 
                 <div className="flex-1 min-w-0">

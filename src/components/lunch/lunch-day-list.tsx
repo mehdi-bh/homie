@@ -44,7 +44,7 @@ export type LunchSlot = {
 };
 
 export function LunchDayList({
-  slots,
+  slots: initialSlots,
   profiles,
   currentUserId,
 }: {
@@ -52,10 +52,17 @@ export function LunchDayList({
   profiles: Profile[];
   currentUserId: string;
 }) {
+  const [slots, setSlots] = useState(initialSlots);
   const [editing, setEditing] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-  const [saving, setSaving] = useState<string | null>(null);
   const escapedRef = useRef(false);
+
+  // Sync with server data when props change (realtime refresh)
+  const slotsRef = useRef(initialSlots);
+  if (initialSlots !== slotsRef.current) {
+    slotsRef.current = initialSlots;
+    setSlots(initialSlots);
+  }
 
   const todayStr = toDateString(new Date());
 
@@ -64,7 +71,35 @@ export function LunchDayList({
     preference: string | null,
     eating: boolean
   ) {
-    setSaving(slotId);
+    // Optimistic update
+    setSlots((prev) =>
+      prev.map((s) => {
+        if (s.id !== slotId) return s;
+        const existingPref = s.preferences.find(
+          (p) => p.user_id === currentUserId
+        );
+        const updatedPref = existingPref
+          ? { ...existingPref, preference, eating }
+          : {
+              id: `temp-${Date.now()}`,
+              lunch_slot_id: slotId,
+              user_id: currentUserId,
+              preference,
+              eating,
+              note: null,
+            };
+        return {
+          ...s,
+          preferences: existingPref
+            ? s.preferences.map((p) =>
+                p.user_id === currentUserId ? updatedPref : p
+              )
+            : [...s.preferences, updatedPref],
+        };
+      })
+    );
+    setEditing(null);
+
     const supabase = createClient();
     await supabase.from("lunch_preferences").upsert(
       {
@@ -75,8 +110,6 @@ export function LunchDayList({
       },
       { onConflict: "lunch_slot_id,user_id" }
     );
-    setSaving(null);
-    setEditing(null);
   }
 
   if (slots.length === 0) {
@@ -94,7 +127,6 @@ export function LunchDayList({
         const isPast = slot.date < todayStr;
         const dayLabel = format(parseISO(slot.date), "EEEE d", { locale: fr });
         const isCook = slot.cook_id === currentUserId;
-        const isSaving = saving === slot.id;
 
         return (
           <div
@@ -210,7 +242,6 @@ export function LunchDayList({
                             !eating
                           )
                         }
-                        disabled={isSaving}
                         className={cn(
                           "shrink-0 h-8 w-8 rounded-full flex items-center justify-center transition-colors active:scale-95",
                           eating

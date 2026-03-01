@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { registerServiceWorker, subscribeToPush, sendSubscriptionToServer } from "@/lib/push";
@@ -15,8 +15,16 @@ const REALTIME_TABLES = [
   "swaps",
 ] as const;
 
+const DEBOUNCE_MS = 500;
+
 export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const debouncedRefresh = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => router.refresh(), DEBOUNCE_MS);
+  }, [router]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -27,7 +35,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       channel.on(
         "postgres_changes",
         { event: "*", schema: "public", table },
-        () => router.refresh()
+        debouncedRefresh
       );
     }
 
@@ -43,9 +51,10 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
       supabase.removeChannel(channel);
     };
-  }, [router]);
+  }, [debouncedRefresh]);
 
   return <>{children}</>;
 }
