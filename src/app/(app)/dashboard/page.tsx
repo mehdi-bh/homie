@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -8,11 +9,12 @@ import { Button } from "@/components/ui/button";
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("display_name, avatar_emoji")
-    .eq("id", user!.id)
+    .eq("id", user.id)
     .single();
 
   const name = profile?.display_name || "there";
