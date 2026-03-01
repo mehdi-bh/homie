@@ -2,12 +2,12 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { format, addWeeks, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowRight, ListChecks, AlertCircle } from "lucide-react";
+import { ArrowRight, Sun, Moon, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getWeekMonday, getWeekDates, toDateString } from "@/lib/rotation";
-import { Card, CardContent } from "@/components/ui/card";
 import { GenerateWeekButton } from "@/components/dashboard/generate-week-button";
 import { MiniWeekPreview } from "@/components/dashboard/mini-week-preview";
+import { ChoreChecklist } from "@/components/dashboard/chore-checklist";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn } from "@/lib/utils";
 
@@ -62,7 +62,7 @@ export default async function DashboardPage() {
     color: string;
   };
 
-  let myChores: Array<{ id: string; chore_name: string; status: string }> = [];
+  let myChores: Array<{ id: string; chore_name: string; status: string; due_date: string | null }> = [];
   let todayDinner: {
     note: string | null;
     status: string;
@@ -102,7 +102,7 @@ export default async function DashboardPage() {
     ] = await Promise.all([
       supabase
         .from("chore_slots")
-        .select("id, chore_name, status")
+        .select("id, chore_name, status, due_date")
         .eq("week_id", currentWeek!.id)
         .eq("assigned_to", user.id)
         .order("chore_name"),
@@ -308,133 +308,79 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Today's cards */}
-      <div className="grid gap-3">
+      {/* Chores checklist */}
+      {hasCurrentWeek && myChores.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-xs font-medium text-muted-foreground">Mes taches</p>
+            <Link href="/chores" className="text-xs text-muted-foreground hover:text-foreground">
+              Tout voir
+            </Link>
+          </div>
+          <ChoreChecklist chores={myChores} />
+        </div>
+      )}
+
+      {/* Meals */}
+      <div className="grid grid-cols-2 gap-3">
         {/* Lunch */}
-        <Link href="/lunch">
-          <Card className="transition-colors active:bg-muted/50">
-            <CardContent className="py-3 px-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className="h-9 w-9 rounded-full flex items-center justify-center text-base shrink-0"
-                  style={{
-                    backgroundColor: todayLunch?.cook.color
-                      ? todayLunch.cook.color + "15"
-                      : undefined,
-                  }}
-                >
-                  <UserAvatar src={todayLunch?.cook.avatar_url} fallback={todayLunch?.cook.avatar_emoji ?? "\u{1F37D}"} size="md" />
+        <Link href="/lunch" className="block">
+          <div className="rounded-xl border p-3 transition-colors active:bg-muted/50 space-y-2.5">
+            <div className="flex items-center gap-1.5">
+              <Sun className="h-3.5 w-3.5 text-amber-500" />
+              <span className="text-xs font-medium text-amber-600">Dejeuner</span>
+            </div>
+            {!hasCurrentWeek ? (
+              <p className="text-xs text-muted-foreground">Pas de semaine</p>
+            ) : !todayLunch ? (
+              <p className="text-xs text-muted-foreground">—</p>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <UserAvatar src={todayLunch.cook.avatar_url} fallback={todayLunch.cook.avatar_emoji} size="sm" />
+                  <span className="text-sm font-medium truncate">
+                    {todayLunch.isCook ? "Toi" : todayLunch.cook.display_name.split(" ")[0]}
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">Dejeuner</p>
-                  {!hasCurrentWeek ? (
-                    <p className="text-xs text-muted-foreground">
-                      Pas de semaine
-                    </p>
-                  ) : !todayLunch ? (
-                    <p className="text-xs text-muted-foreground">—</p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {todayLunch.isCook
-                        ? "Tu cuisines"
-                        : `${todayLunch.cook.display_name} cuisine`}
-                      {todayLunch.eating && todayLunch.myPreference
-                        ? ` · ${todayLunch.myPreference}`
-                        : ""}
-                      {!todayLunch.eating ? " · Pas la" : ""}
-                    </p>
-                  )}
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                {todayLunch.eating && todayLunch.myPreference && (
+                  <p className="text-xs text-muted-foreground truncate">{todayLunch.myPreference}</p>
+                )}
+                {!todayLunch.eating && (
+                  <p className="text-xs text-muted-foreground">Pas la</p>
+                )}
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         </Link>
 
         {/* Dinner */}
-        <Link href="/dinner">
-          <Card className="transition-colors active:bg-muted/50">
-            <CardContent className="py-3 px-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className="h-9 w-9 rounded-full flex items-center justify-center text-base shrink-0"
-                  style={{
-                    backgroundColor: todayDinner?.cook.color
-                      ? todayDinner.cook.color + "15"
-                      : undefined,
-                  }}
-                >
-                  <UserAvatar src={todayDinner?.cook.avatar_url} fallback={todayDinner?.cook.avatar_emoji ?? "\u{1F373}"} size="md" />
+        <Link href="/dinner" className="block">
+          <div className="rounded-xl border p-3 transition-colors active:bg-muted/50 space-y-2.5">
+            <div className="flex items-center gap-1.5">
+              <Moon className="h-3.5 w-3.5 text-indigo-400" />
+              <span className="text-xs font-medium text-indigo-500">Diner</span>
+            </div>
+            {!hasCurrentWeek ? (
+              <p className="text-xs text-muted-foreground">Pas de semaine</p>
+            ) : !todayDinner ? (
+              <p className="text-xs text-muted-foreground">—</p>
+            ) : todayDinner.status === "skipped" ? (
+              <p className="text-xs text-muted-foreground">Passe</p>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <UserAvatar src={todayDinner.cook.avatar_url} fallback={todayDinner.cook.avatar_emoji} size="sm" />
+                  <span className="text-sm font-medium truncate">
+                    {todayDinner.isCook ? "Toi" : todayDinner.cook.display_name.split(" ")[0]}
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">Diner</p>
-                  {!hasCurrentWeek ? (
-                    <p className="text-xs text-muted-foreground">
-                      Pas de semaine
-                    </p>
-                  ) : !todayDinner ? (
-                    <p className="text-xs text-muted-foreground">—</p>
-                  ) : todayDinner.status === "skipped" ? (
-                    <p className="text-xs text-muted-foreground">Passe</p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {todayDinner.isCook
-                        ? "Tu cuisines"
-                        : `${todayDinner.cook.display_name} cuisine`}
-                      {todayDinner.note ? ` · ${todayDinner.note}` : ""}
-                      {` · ${todayDinner.eaters.length} pers.`}
-                    </p>
-                  )}
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                <p className="text-xs text-muted-foreground truncate">
+                  {todayDinner.note ?? "Pas encore decide"}
+                  {` · ${todayDinner.eaters.length} pers.`}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        {/* Chores */}
-        <Link href="/chores">
-          <Card className="transition-colors active:bg-muted/50">
-            <CardContent className="py-3 px-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  <ListChecks className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">Taches</p>
-                  {!hasCurrentWeek ? (
-                    <p className="text-xs text-muted-foreground">
-                      Pas de semaine
-                    </p>
-                  ) : myChores.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      Rien cette semaine
-                    </p>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
-                      {myChores.map((chore) => {
-                        const isDone = chore.status === "done";
-                        return (
-                          <span
-                            key={chore.id}
-                            className={cn(
-                              "text-xs capitalize",
-                              isDone
-                                ? "text-green-600 line-through"
-                                : "text-foreground"
-                            )}
-                          >
-                            {chore.chore_name}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
-              </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         </Link>
       </div>
 
