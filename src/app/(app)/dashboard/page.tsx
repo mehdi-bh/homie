@@ -155,7 +155,6 @@ export default async function DashboardPage() {
       supabase
         .from("grocery_items")
         .select("id, priority")
-        .eq("week_id", currentWeek!.id)
         .eq("archived", false)
         .eq("checked", false),
       supabase
@@ -231,13 +230,13 @@ export default async function DashboardPage() {
     if (tomorrowCookDinner) {
       pendingActions.push({
         text: "Tu cuisines le souper demain",
-        href: "/dinner",
+        href: "/meals",
       });
     }
     if (tomorrowCookLunch) {
       pendingActions.push({
         text: "Tu cuisines le dejeuner demain",
-        href: "/lunch",
+        href: "/meals?tab=dejeuner",
       });
     }
 
@@ -340,7 +339,7 @@ export default async function DashboardPage() {
       {/* Meals + Grocery */}
       <div className="grid grid-cols-2 gap-3">
         {/* Lunch */}
-        <Link href="/lunch" className="block">
+        <Link href="/meals?tab=dejeuner" className="block">
           <div className="rounded-xl border p-3 transition-colors active:bg-muted/50 space-y-2.5">
             <div className="flex items-center gap-1.5">
               <Sun className="h-3.5 w-3.5 text-amber-500" />
@@ -368,7 +367,7 @@ export default async function DashboardPage() {
         </Link>
 
         {/* Dinner */}
-        <Link href="/dinner" className="block">
+        <Link href="/meals" className="block">
           <div className="rounded-xl border p-3 transition-colors active:bg-muted/50 space-y-2.5">
             <div className="flex items-center gap-1.5">
               <Moon className="h-3.5 w-3.5 text-indigo-400" />

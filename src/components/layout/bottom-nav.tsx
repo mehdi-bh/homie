@@ -9,7 +9,7 @@ const tabs = [
   { href: "/dashboard", label: "Accueil", icon: Home },
   { href: "/week", label: "Semaine", icon: Calendar },
   { href: "/grocery", label: "Epicerie", icon: ShoppingCart },
-  { href: "/dinner", label: "Repas", icon: UtensilsCrossed },
+  { href: "/meals", label: "Repas", icon: UtensilsCrossed },
   { href: "/car", label: "Auto", icon: Car },
 ] as const;
 
@@ -23,7 +23,13 @@ export function BottomNav() {
     >
       <div className="mx-auto flex max-w-lg items-center justify-around">
         {tabs.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(href + "/");
+          const active =
+            pathname === href ||
+            pathname.startsWith(href + "/") ||
+            (href === "/meals" &&
+              (pathname.startsWith("/dinner") ||
+                pathname.startsWith("/lunch") ||
+                pathname.startsWith("/recipes")));
           return (
             <Link
               key={href}

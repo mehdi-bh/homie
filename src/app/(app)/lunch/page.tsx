@@ -70,7 +70,7 @@ export default async function LunchPage({
         title="Dejeuner"
         action={
           <Link
-            href={`/dinner${isNext ? "?week=next" : ""}`}
+            href={`/meals${isNext ? "?week=next" : ""}`}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Souper →
