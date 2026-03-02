@@ -402,8 +402,8 @@ export function GroceryList({
 
           return (
             <div key={`${meal.date}-${meal.type}`} className="rounded-2xl bg-card shadow-sm border border-border/50 p-3.5">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-sm font-semibold">{meal.recipeName}</p>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <p className="text-sm font-semibold min-w-0 truncate">{meal.recipeName}</p>
                 <span className="text-[10px] text-muted-foreground font-medium">
                   {meal.eaterCount} pers.
                 </span>

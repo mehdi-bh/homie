@@ -3,6 +3,7 @@
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useRouter } from "next/navigation";
+import { Sun, Moon, Check } from "lucide-react";
 import { toDateString } from "@/lib/rotation";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn } from "@/lib/utils";
@@ -67,13 +68,13 @@ export function WeekGrid({
           <div
             key={day.date}
             className={cn(
-              "rounded-2xl bg-card shadow-sm border border-border/50 p-3.5 transition-all",
+              "rounded-2xl bg-card shadow-sm border border-border/50 p-3 transition-all",
               isToday && "ring-2 ring-primary/20 shadow-md",
               isPast && "opacity-45"
             )}
           >
             {/* Day header */}
-            <div className="flex items-center gap-2 mb-2.5">
+            <div className="flex items-center gap-2 mb-2">
               <span
                 className={cn(
                   "text-sm font-bold capitalize",
@@ -90,71 +91,93 @@ export function WeekGrid({
             </div>
 
             {/* Meals row */}
-            <div className="flex gap-2.5">
+            <div className="grid grid-cols-2 gap-2">
               {/* Lunch */}
               <button
                 onClick={() => router.push("/lunch")}
-                className="flex-1 flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-2.5 min-h-[48px] transition-all active:scale-[0.97] active:bg-muted"
+                className={cn(
+                  "min-w-0 flex items-center gap-2 rounded-xl px-2.5 py-2 min-h-[42px] transition-all active:scale-[0.97] overflow-hidden",
+                  l?.recipeName
+                    ? "bg-primary/6 active:bg-primary/10"
+                    : "bg-muted/30 active:bg-muted/50"
+                )}
               >
                 {l && l.status !== "skipped" ? (
                   <>
-                    <UserAvatar src={l.cookAvatarUrl} fallback={l.cookEmoji} size="sm" />
+                    <Sun className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                    <UserAvatar src={l.cookAvatarUrl} fallback={l.cookEmoji} size="xs" className="h-5 w-5" />
                     <div className="flex-1 min-w-0 text-left">
-                      <p className="text-[10px] text-muted-foreground leading-none mb-0.5 font-medium">
-                        Dej.
-                      </p>
-                      <p
-                        className="text-xs font-semibold truncate"
-                        style={{ color: l.cookColor }}
-                      >
-                        {l.cookId === currentUserId
-                          ? "Toi"
-                          : l.cookName.split(" ")[0]}
-                        {l.recipeName ? ` — ${l.recipeName}` : ""}
-                      </p>
+                      {l.recipeName ? (
+                        <p className="text-xs font-semibold truncate text-foreground">
+                          {l.recipeName}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {l.cookId === currentUserId ? "Toi" : l.cookName.split(" ")[0]}
+                        </p>
+                      )}
                     </div>
+                    {l.recipeName && (
+                      <Check className="h-3 w-3 text-primary shrink-0" />
+                    )}
                   </>
                 ) : (
-                  <span className="text-xs text-muted-foreground font-medium">
-                    {l?.status === "skipped" ? "Dej. — passe" : "Dej."}
-                  </span>
+                  <>
+                    <Sun className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                    <span className="text-xs text-muted-foreground/50">
+                      {l?.status === "skipped" ? "Passe" : "—"}
+                    </span>
+                  </>
                 )}
               </button>
 
               {/* Dinner */}
               <button
                 onClick={() => router.push("/dinner")}
-                className="flex-1 flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-2.5 min-h-[48px] transition-all active:scale-[0.97] active:bg-muted"
+                className={cn(
+                  "min-w-0 flex items-center gap-2 rounded-xl px-2.5 py-2 min-h-[42px] transition-all active:scale-[0.97] overflow-hidden",
+                  d?.recipeName || d?.note
+                    ? "bg-primary/6 active:bg-primary/10"
+                    : "bg-muted/30 active:bg-muted/50"
+                )}
               >
                 {d && d.status !== "skipped" ? (
                   <>
-                    <UserAvatar src={d.cookAvatarUrl} fallback={d.cookEmoji} size="sm" />
+                    <Moon className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                    <UserAvatar src={d.cookAvatarUrl} fallback={d.cookEmoji} size="xs" className="h-5 w-5" />
                     <div className="flex-1 min-w-0 text-left">
-                      <p className="text-[10px] text-muted-foreground leading-none mb-0.5 font-medium">
-                        Souper
-                      </p>
-                      <p
-                        className="text-xs font-semibold truncate"
-                        style={{ color: d.cookColor }}
-                      >
-                        {d.cookId === currentUserId
-                          ? "Toi"
-                          : d.cookName.split(" ")[0]}
-                        {d.recipeName ? ` — ${d.recipeName}` : d.note ? ` — ${d.note}` : ""}
-                      </p>
+                      {d.recipeName ? (
+                        <p className="text-xs font-semibold truncate text-foreground">
+                          {d.recipeName}
+                        </p>
+                      ) : d.note ? (
+                        <p className="text-xs font-medium truncate text-foreground">
+                          {d.note}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {d.cookId === currentUserId ? "Toi" : d.cookName.split(" ")[0]}
+                        </p>
+                      )}
                     </div>
+                    {(d.recipeName || d.note) && (
+                      <Check className="h-3 w-3 text-primary shrink-0" />
+                    )}
                   </>
                 ) : (
-                  <span className="text-xs text-muted-foreground font-medium">
-                    {d?.status === "skipped" ? "Souper — passe" : "Souper"}
-                  </span>
+                  <>
+                    <Moon className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                    <span className="text-xs text-muted-foreground/50">
+                      {d?.status === "skipped" ? "Passe" : "—"}
+                    </span>
+                  </>
                 )}
               </button>
             </div>
 
             {/* Chores for this day */}
             {day.chores.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2.5">
+              <div className="flex flex-wrap gap-1.5 mt-2">
                 {day.chores.map((chore) => {
                   const isDone = chore.status === "done";
                   const isMine = chore.assignedTo.id === currentUserId;
@@ -164,7 +187,7 @@ export function WeekGrid({
                       key={chore.name}
                       onClick={() => router.push("/chores")}
                       className={cn(
-                        "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs transition-all active:scale-[0.95] border min-h-[32px]",
+                        "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs transition-all active:scale-[0.95] border min-h-[28px]",
                         isDone ? "bg-muted/30 text-muted-foreground" : "bg-card"
                       )}
                       style={{ borderColor: chore.assignedTo.color + "30" }}
@@ -173,7 +196,7 @@ export function WeekGrid({
                       <span className={cn("capitalize font-medium", isDone && "line-through")}>
                         {chore.name}
                       </span>
-                      {isDone && <span className="text-emerald-600">✓</span>}
+                      {isDone && <Check className="h-3 w-3 text-emerald-600" />}
                       {isMine && !isDone && (
                         <span className="text-muted-foreground">(toi)</span>
                       )}

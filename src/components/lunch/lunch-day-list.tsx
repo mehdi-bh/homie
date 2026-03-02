@@ -6,7 +6,6 @@ import { fr } from "date-fns/locale";
 import {
   ShoppingCart,
   Check,
-  SkipForward,
   Undo2,
   UtensilsCrossed,
   X,
@@ -234,7 +233,7 @@ export function LunchDayList({
                         Undo
                       </>
                     ) : (
-                      <SkipForward className="h-3.5 w-3.5" />
+                      <span className="text-xs">Skip</span>
                     )}
                   </button>
                 )}
