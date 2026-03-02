@@ -4,8 +4,8 @@
   "description": "Home management for roommates",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4f46e5",
+  "background_color": "#f5f0eb",
+  "theme_color": "#c4623a",
   "icons": [
     {
       "src": "/icon-192.png",
