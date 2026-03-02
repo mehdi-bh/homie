@@ -21,7 +21,7 @@ const DAY_INDEX: Record<string, number> = {
   sunday: 6,
 };
 
-export async function generateWeek(targetDate?: Date) {
+export async function generateWeek(targetDate?: Date, force = false) {
   const supabase = await createClient();
 
   // Default: generate for next week
@@ -37,8 +37,24 @@ export async function generateWeek(targetDate?: Date) {
     .eq("week_start", weekStartStr)
     .single();
 
-  if (existingWeek?.generated) {
+  const isForceRegen = existingWeek?.generated && force;
+
+  if (existingWeek?.generated && !force) {
     return { weekId: existingWeek.id, alreadyGenerated: true };
+  }
+
+  // Force regenerate: delete existing slots
+  if (isForceRegen) {
+    await Promise.all([
+      supabase.from("dinner_slots").delete().eq("week_id", existingWeek.id),
+      supabase.from("lunch_slots").delete().eq("week_id", existingWeek.id),
+      supabase.from("chore_slots").delete().eq("week_id", existingWeek.id),
+      supabase.from("grocery_slots").delete().eq("week_id", existingWeek.id),
+    ]);
+    await supabase
+      .from("weeks")
+      .update({ generated: false })
+      .eq("id", existingWeek.id);
   }
 
   // Get household settings (auto-creates if missing)
@@ -183,35 +199,37 @@ export async function generateWeek(targetDate?: Date) {
     }
   }
 
-  // Mark week as generated and advance offsets
-  const newOffsets = { ...offsets };
-  newOffsets.dinner = (dinnerOffset + 1) % dinnerRotation.length;
-  newOffsets.lunch = (lunchOffset + 1) % lunchRotation.length;
-  newOffsets.grocery = (groceryOffset + 1) % groceryRotation.length;
-
+  // Mark week as generated
   await supabase
     .from("weeks")
     .update({ generated: true })
     .eq("id", weekId);
 
-  await supabase
-    .from("household_settings")
-    .update({ current_week_offset: newOffsets })
-    .eq("id", settings.id);
+  // Only advance offsets on first-time generation, not on force regeneration
+  if (!isForceRegen) {
+    const newOffsets = { ...offsets };
+    newOffsets.dinner = (dinnerOffset + 1) % dinnerRotation.length;
+    newOffsets.lunch = (lunchOffset + 1) % lunchRotation.length;
+    newOffsets.grocery = (groceryOffset + 1) % groceryRotation.length;
 
-  // Advance rotation_offset on each rotation-mode chore definition
-  const rotationDefs = (choreDefs ?? []).filter(
-    (def) => def.assignment_mode === "rotation" && def.rotation.length > 0
-  );
-  for (const def of rotationDefs) {
-    const rotation = def.rotation as string[];
-    const frequency = def.frequency as string[];
-    const slotCount = frequency.includes("weekly") ? 1 : frequency.length;
-    const newOffset = ((def.rotation_offset ?? 0) + slotCount) % rotation.length;
     await supabase
-      .from("chore_definitions")
-      .update({ rotation_offset: newOffset })
-      .eq("id", def.id);
+      .from("household_settings")
+      .update({ current_week_offset: newOffsets })
+      .eq("id", settings.id);
+
+    const rotationDefs = (choreDefs ?? []).filter(
+      (def) => def.assignment_mode === "rotation" && def.rotation.length > 0
+    );
+    for (const def of rotationDefs) {
+      const rotation = def.rotation as string[];
+      const frequency = def.frequency as string[];
+      const slotCount = frequency.includes("weekly") ? 1 : frequency.length;
+      const newOffset = ((def.rotation_offset ?? 0) + slotCount) % rotation.length;
+      await supabase
+        .from("chore_definitions")
+        .update({ rotation_offset: newOffset })
+        .eq("id", def.id);
+    }
   }
 
   return { weekId, alreadyGenerated: false };

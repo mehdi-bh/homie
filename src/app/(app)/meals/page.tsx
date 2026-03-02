@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
-import { addWeeks } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/page-header";
-import { WeekToggle } from "@/components/shared/week-toggle";
+import { WeekNavigator } from "@/components/shared/week-navigator";
 import { MealsTabs } from "@/components/meals/meals-tabs";
 import {
   DinnerSlotList,
@@ -17,7 +16,7 @@ import { getWeekMonday, toDateString } from "@/lib/rotation";
 export default async function MealsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string; tab?: string }>;
+  searchParams: Promise<{ date?: string; tab?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -26,14 +25,15 @@ export default async function MealsPage({
   if (!user) redirect("/login");
 
   const params = await searchParams;
-  const isNext = params.week === "next";
   const tab = params.tab ?? "souper";
-  const monday = isNext ? addWeeks(getWeekMonday(), 1) : getWeekMonday();
+  const monday = params.date
+    ? getWeekMonday(new Date(params.date))
+    : getWeekMonday();
   const weekStartStr = toDateString(monday);
 
   const { data: week } = await supabase
     .from("weeks")
-    .select("id")
+    .select("id, generated")
     .eq("week_start", weekStartStr)
     .single();
 
@@ -43,6 +43,7 @@ export default async function MealsPage({
     .order("display_name");
 
   const profiles = profilesData ?? [];
+  const generated = week?.generated ?? false;
 
   if (tab === "dejeuner") {
     let slots: LunchSlot[] = [];
@@ -73,7 +74,11 @@ export default async function MealsPage({
       <div className="space-y-4">
         <PageHeader title="Repas" />
         <MealsTabs />
-        <WeekToggle />
+        <WeekNavigator
+          currentDate={weekStartStr}
+          generated={generated}
+          basePath="/meals"
+        />
         <LunchDayList
           slots={slots}
           profiles={profiles}
@@ -112,7 +117,11 @@ export default async function MealsPage({
     <div className="space-y-4">
       <PageHeader title="Repas" />
       <MealsTabs />
-      <WeekToggle />
+      <WeekNavigator
+        currentDate={weekStartStr}
+        generated={generated}
+        basePath="/meals"
+      />
       <DinnerSlotList
         slots={slots}
         profiles={profiles}

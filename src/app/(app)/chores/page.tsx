@@ -3,25 +3,34 @@ import Link from "next/link";
 import { Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/page-header";
+import { WeekNavigator } from "@/components/shared/week-navigator";
 import { ChoreList } from "@/components/chores/chore-list";
 import { getWeekMonday, toDateString } from "@/lib/rotation";
 
-export default async function ChoresPage() {
+export default async function ChoresPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const monday = getWeekMonday();
+  const params = await searchParams;
+  const monday = params.date
+    ? getWeekMonday(new Date(params.date))
+    : getWeekMonday();
   const weekStartStr = toDateString(monday);
 
-  // Get current week
   const { data: week } = await supabase
     .from("weeks")
-    .select("id")
+    .select("id, generated")
     .eq("week_start", weekStartStr)
     .single();
+
+  const generated = week?.generated ?? false;
 
   let chores: Array<{
     id: string;
@@ -74,8 +83,8 @@ export default async function ChoresPage() {
         title="Taches menageres"
         description={
           totalCount > 0
-            ? `${doneCount}/${totalCount} faites cette semaine`
-            : "Aucune semaine generee"
+            ? `${doneCount}/${totalCount} faites`
+            : undefined
         }
         action={
           <Link
@@ -85,6 +94,11 @@ export default async function ChoresPage() {
             <Settings className="h-5 w-5" />
           </Link>
         }
+      />
+      <WeekNavigator
+        currentDate={weekStartStr}
+        generated={generated}
+        basePath="/chores"
       />
       <ChoreList chores={chores} currentUserId={user.id} />
     </div>

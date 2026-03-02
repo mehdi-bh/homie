@@ -82,7 +82,7 @@ export function MiniWeekPreview({
             {showNext ? "Semaine prochaine" : "Cette semaine"}
           </p>
         )}
-        <Link href={`/week${showNext ? "?week=next" : ""}`}>
+        <Link href="/week">
           <ArrowRight className="h-4 w-4 text-muted-foreground" />
         </Link>
       </div>

@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { addWeeks } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/page-header";
-import { WeekToggle } from "@/components/shared/week-toggle";
+import { WeekNavigator } from "@/components/shared/week-navigator";
 import {
   DinnerSlotList,
   type DinnerSlot,
@@ -13,7 +12,7 @@ import { getWeekMonday, toDateString } from "@/lib/rotation";
 export default async function DinnerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string }>;
+  searchParams: Promise<{ date?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -22,13 +21,14 @@ export default async function DinnerPage({
   if (!user) redirect("/login");
 
   const params = await searchParams;
-  const isNext = params.week === "next";
-  const monday = isNext ? addWeeks(getWeekMonday(), 1) : getWeekMonday();
+  const monday = params.date
+    ? getWeekMonday(new Date(params.date))
+    : getWeekMonday();
   const weekStartStr = toDateString(monday);
 
   const { data: week } = await supabase
     .from("weeks")
-    .select("id")
+    .select("id, generated")
     .eq("week_start", weekStartStr)
     .single();
 
@@ -38,6 +38,7 @@ export default async function DinnerPage({
     .order("display_name");
 
   const profiles = profilesData ?? [];
+  const generated = week?.generated ?? false;
 
   let slots: DinnerSlot[] = [];
 
@@ -70,14 +71,18 @@ export default async function DinnerPage({
         title="Souper"
         action={
           <Link
-            href={`/meals?tab=dejeuner${isNext ? "&week=next" : ""}`}
+            href={`/meals?tab=dejeuner&date=${weekStartStr}`}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Dejeuner →
           </Link>
         }
       />
-      <WeekToggle />
+      <WeekNavigator
+        currentDate={weekStartStr}
+        generated={generated}
+        basePath="/dinner"
+      />
       <DinnerSlotList
         slots={slots}
         profiles={profiles}

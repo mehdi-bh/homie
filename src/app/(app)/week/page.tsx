@@ -1,16 +1,14 @@
 import { redirect } from "next/navigation";
-import { addWeeks } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/page-header";
-import { WeekToggle } from "@/components/shared/week-toggle";
+import { WeekNavigator } from "@/components/shared/week-navigator";
 import { WeekGrid } from "@/components/week/week-grid";
 import { getWeekMonday, getWeekDates, toDateString } from "@/lib/rotation";
-import { GenerateWeekButton } from "@/components/dashboard/generate-week-button";
 
 export default async function WeekPage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string }>;
+  searchParams: Promise<{ date?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -19,8 +17,9 @@ export default async function WeekPage({
   if (!user) redirect("/login");
 
   const params = await searchParams;
-  const isNext = params.week === "next";
-  const monday = isNext ? addWeeks(getWeekMonday(), 1) : getWeekMonday();
+  const monday = params.date
+    ? getWeekMonday(new Date(params.date))
+    : getWeekMonday();
   const weekStartStr = toDateString(monday);
   const dates = getWeekDates(monday);
 
@@ -30,20 +29,17 @@ export default async function WeekPage({
     .eq("week_start", weekStartStr)
     .single();
 
-  if (!week?.generated) {
+  const generated = week?.generated ?? false;
+
+  if (!week || !generated) {
     return (
       <div className="space-y-6">
         <PageHeader title="Semaine" />
-        <WeekToggle />
-        <div className="py-8 text-center space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Pas de semaine generee.
-          </p>
-          <GenerateWeekButton
-            label={isNext ? "Generer la semaine prochaine" : "Generer cette semaine"}
-            targetDate={weekStartStr}
-          />
-        </div>
+        <WeekNavigator
+          currentDate={weekStartStr}
+          generated={false}
+          basePath="/week"
+        />
       </div>
     );
   }
@@ -137,7 +133,11 @@ export default async function WeekPage({
   return (
     <div className="space-y-4">
       <PageHeader title="Semaine" />
-      <WeekToggle />
+      <WeekNavigator
+        currentDate={weekStartStr}
+        generated={generated}
+        basePath="/week"
+      />
       <WeekGrid days={weekDays} currentUserId={user.id} />
     </div>
   );

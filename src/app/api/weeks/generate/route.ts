@@ -17,8 +17,9 @@ export async function POST(request: NextRequest) {
     const targetDate = body.target_date
       ? new Date(body.target_date)
       : undefined;
+    const force = body.force === true;
 
-    const result = await generateWeek(targetDate);
+    const result = await generateWeek(targetDate, force);
 
     return NextResponse.json(result);
   } catch (error) {

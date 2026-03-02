@@ -5,7 +5,6 @@ import { fr } from "date-fns/locale";
 import { ArrowRight, Sun, Moon, AlertCircle, ShoppingCart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getWeekMonday, getWeekDates, toDateString } from "@/lib/rotation";
-import { GenerateWeekButton } from "@/components/dashboard/generate-week-button";
 import { MiniWeekPreview } from "@/components/dashboard/mini-week-preview";
 import { ChoreChecklist } from "@/components/dashboard/chore-checklist";
 import { TodoWidget } from "@/components/dashboard/todo-widget";
@@ -481,24 +480,6 @@ export default async function DashboardPage() {
           nextWeek={nextMiniWeek}
           todayStr={todayStr}
         />
-      )}
-
-      {/* Week generation */}
-      {(!hasCurrentWeek || !hasNextWeek) && (
-        <div className="space-y-3">
-          {!hasCurrentWeek && (
-            <GenerateWeekButton
-              label="Generer cette semaine"
-              targetDate={weekStartStr}
-            />
-          )}
-          {!hasNextWeek && (
-            <GenerateWeekButton
-              label="Generer la semaine prochaine"
-              targetDate={nextWeekStartStr}
-            />
-          )}
-        </div>
       )}
 
       {/* Settings link */}
