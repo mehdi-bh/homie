@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ShoppingCart, Check } from "lucide-react";
+import { ShoppingCart, Check, SkipForward, Undo2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toDateString } from "@/lib/rotation";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -167,59 +167,74 @@ export function LunchDayList({
           const isPast = slot.date < todayStr;
           const isSkipped = slot.status === "skipped";
           const isCook = slot.cook_id === currentUserId;
-          const dayLabel = format(parseISO(slot.date), "EEEE d", {
-            locale: fr,
-          });
-          const hasRecipe = !!slot.recipe_id;
+          const dayLabel = format(parseISO(slot.date), "EEEE d", { locale: fr });
 
           return (
             <div
               key={slot.id}
               className={cn(
                 "rounded-2xl bg-card shadow-sm border border-border/50 p-4",
-                !isSkipped && !isPast && !hasRecipe && "border-dashed border-muted-foreground/20 bg-muted/20",
                 isToday && "ring-2 ring-primary/20 shadow-md",
                 isPast && "opacity-45",
-                isSkipped && "opacity-35"
+                isSkipped && "opacity-30"
               )}
               style={{
                 borderLeftWidth: 4,
                 borderLeftColor: isSkipped ? "#9ca3af" : slot.cook.color,
               }}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className="font-bold capitalize text-sm">{dayLabel}</p>
-                  <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                    <UserAvatar
-                      src={slot.cook.avatar_url}
-                      fallback={slot.cook.avatar_emoji}
-                      size="sm"
-                      className="h-5 w-5 text-xs"
-                    />
-                    <span>{slot.cook.display_name}</span>
-                    {isCook && <span className="opacity-60">(toi)</span>}
-                  </div>
-                </div>
+              {/* Row 1: Day + today badge + skip */}
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
+                  <p className="font-bold capitalize text-[15px]">{dayLabel}</p>
                   {isToday && (
-                    <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-1 rounded-full">
+                    <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                       Aujourd&apos;hui
                     </span>
                   )}
-                  {isSkipped && (
-                    <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                      Passe
-                    </span>
-                  )}
                 </div>
+                {!isPast && (
+                  <button
+                    onClick={() => toggleSkip(slot.id, slot.status)}
+                    className={cn(
+                      "flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-all active:scale-95",
+                      isSkipped
+                        ? "text-primary bg-primary/8"
+                        : "text-muted-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    {isSkipped ? (
+                      <>
+                        <Undo2 className="h-3 w-3" />
+                        Undo
+                      </>
+                    ) : (
+                      <>
+                        <SkipForward className="h-3 w-3" />
+                        Skip
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
+              {/* Row 2: Cook */}
+              <div className="flex items-center gap-2 mt-1.5">
+                <UserAvatar
+                  src={slot.cook.avatar_url}
+                  fallback={slot.cook.avatar_emoji}
+                  size="sm"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {slot.cook.display_name}
+                  {isCook && " (toi)"}
+                </span>
               </div>
 
               {!isSkipped && (
                 <>
-                  {/* Recipe name */}
-                  <div className="mb-3">
+                  {/* Recipe */}
+                  <div className="mt-3">
                     <button
                       onClick={() => {
                         if (isCook && !isPast) setPickerSlotId(slot.id);
@@ -248,8 +263,8 @@ export function LunchDayList({
                     )}
                   </div>
 
-                  {/* Cook's note */}
-                  <div className="mb-3">
+                  {/* Note (anyone can edit) */}
+                  <div className="mt-2">
                     {editing === slot.id ? (
                       <input
                         autoFocus
@@ -270,32 +285,31 @@ export function LunchDayList({
                             setEditing(null);
                           }
                         }}
-                        placeholder="Note du cuisinier..."
+                        placeholder="Ajouter une note..."
                       />
                     ) : (
                       <p
                         className={cn(
-                          "text-xs px-1",
+                          "text-xs px-1 py-1 rounded-lg transition-colors",
                           slot.note
                             ? "text-muted-foreground"
-                            : "text-muted-foreground/40 italic",
-                          isCook && !isPast && "cursor-text"
+                            : "text-muted-foreground/30 italic",
+                          !isPast && "cursor-text active:bg-muted/30"
                         )}
                         onClick={() => {
-                          if (isCook && !isPast) {
+                          if (!isPast) {
                             setEditing(slot.id);
                             setEditValue(slot.note || "");
                           }
                         }}
                       >
-                        {slot.note ||
-                          (isCook && !isPast ? "Ajouter une note..." : "")}
+                        {slot.note || "Ajouter une note..."}
                       </p>
                     )}
                   </div>
 
                   {/* Eaters */}
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 mt-3">
                     {profiles.map((profile) => {
                       const isEating = slot.eaters.includes(profile.id);
                       return (
@@ -307,22 +321,20 @@ export function LunchDayList({
                           }
                           disabled={isPast}
                           className={cn(
-                            "h-10 w-10 rounded-full flex items-center justify-center text-sm transition-all border-2 active:scale-90",
+                            "h-10 w-10 rounded-full flex items-center justify-center transition-all border-[2.5px] active:scale-90",
                             isEating
                               ? "opacity-100"
                               : "border-transparent opacity-20"
                           )}
                           style={{
-                            borderColor: isEating
-                              ? profile.color
-                              : "transparent",
+                            borderColor: isEating ? profile.color : "transparent",
                           }}
-                          title={`${profile.display_name} ${isEating ? "mange" : "ne mange pas"}`}
                         >
                           <UserAvatar
                             src={profile.avatar_url}
                             fallback={profile.avatar_emoji}
                             size="sm"
+                            className="ring-0 h-[30px] w-[30px]"
                           />
                         </button>
                       );
@@ -332,22 +344,17 @@ export function LunchDayList({
                     </span>
                   </div>
 
-                  {/* Push to grocery */}
-                  {isCook &&
-                    !isPast &&
-                    slot.recipe_id &&
-                    !slot.ingredients_pushed && (
-                      <button
-                        onClick={() => pushToGrocery(slot.id)}
-                        disabled={pushing === slot.id}
-                        className="mt-3 flex items-center gap-2 text-xs text-primary font-medium bg-primary/6 rounded-xl px-3 py-2.5 min-h-[40px] transition-all active:scale-[0.97] disabled:opacity-50 w-full justify-center"
-                      >
-                        <ShoppingCart className="h-3.5 w-3.5" />
-                        {pushing === slot.id
-                          ? "Envoi..."
-                          : "Envoyer a l'epicerie"}
-                      </button>
-                    )}
+                  {/* Grocery push */}
+                  {isCook && !isPast && slot.recipe_id && !slot.ingredients_pushed && (
+                    <button
+                      onClick={() => pushToGrocery(slot.id)}
+                      disabled={pushing === slot.id}
+                      className="mt-3 flex items-center gap-2 text-xs text-primary font-medium bg-primary/6 rounded-xl px-3 py-2.5 min-h-[40px] transition-all active:scale-[0.97] disabled:opacity-50 w-full justify-center"
+                    >
+                      <ShoppingCart className="h-3.5 w-3.5" />
+                      {pushing === slot.id ? "Envoi..." : "Envoyer a l'epicerie"}
+                    </button>
+                  )}
                   {slot.ingredients_pushed && (
                     <div className="mt-3 flex items-center gap-1.5 text-[11px] text-emerald-600 font-medium">
                       <Check className="h-3.5 w-3.5" />
@@ -355,18 +362,6 @@ export function LunchDayList({
                     </div>
                   )}
                 </>
-              )}
-
-              {/* Skip toggle */}
-              {!isPast && (
-                <div className="mt-3 flex justify-end">
-                  <button
-                    onClick={() => toggleSkip(slot.id, slot.status)}
-                    className="text-xs text-muted-foreground font-medium px-3 py-2 rounded-xl transition-all active:bg-muted min-h-[36px]"
-                  >
-                    {isSkipped ? "Retablir" : "Passer"}
-                  </button>
-                </div>
               )}
             </div>
           );

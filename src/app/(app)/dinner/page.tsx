@@ -74,7 +74,7 @@ export default async function DinnerPage({
             href={`/meals?tab=dejeuner&date=${weekStartStr}`}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            Dejeuner →
+            Lunch →
           </Link>
         }
       />

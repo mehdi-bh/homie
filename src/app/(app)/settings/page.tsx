@@ -235,7 +235,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dejeuner par defaut</label>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Lunch par defaut</label>
           <input
             value={profile.default_lunch || ""}
             onChange={(e) => update("default_lunch", e.target.value)}

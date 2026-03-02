@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Sun, Moon } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -25,22 +25,6 @@ export function MealsTabs() {
     <div className="flex items-center gap-3">
       <div className="flex gap-1 rounded-2xl bg-muted/60 p-1 flex-1">
         <button
-          onClick={() => setTab("souper")}
-          className={cn(
-            "relative flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors min-h-[40px]",
-            tab !== "dejeuner" ? "text-foreground" : "text-muted-foreground"
-          )}
-        >
-          {tab !== "dejeuner" && (
-            <motion.div
-              layoutId="meals-tab"
-              className="absolute inset-0 bg-card rounded-xl shadow-sm"
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            />
-          )}
-          <span className="relative">Souper</span>
-        </button>
-        <button
           onClick={() => setTab("dejeuner")}
           className={cn(
             "relative flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors min-h-[40px]",
@@ -54,7 +38,23 @@ export function MealsTabs() {
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
             />
           )}
-          <span className="relative">Dejeuner</span>
+          <span className="relative inline-flex items-center gap-1.5"><Sun className="h-3.5 w-3.5" />Lunch</span>
+        </button>
+        <button
+          onClick={() => setTab("souper")}
+          className={cn(
+            "relative flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors min-h-[40px]",
+            tab !== "dejeuner" ? "text-foreground" : "text-muted-foreground"
+          )}
+        >
+          {tab !== "dejeuner" && (
+            <motion.div
+              layoutId="meals-tab"
+              className="absolute inset-0 bg-card rounded-xl shadow-sm"
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            />
+          )}
+          <span className="relative inline-flex items-center gap-1.5"><Moon className="h-3.5 w-3.5" />Souper</span>
         </button>
       </div>
       <Link

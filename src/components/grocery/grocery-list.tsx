@@ -398,7 +398,7 @@ export function GroceryList({
 
         {meals.map((meal) => {
           const mealItems = recipeItems.get(meal.recipeName) ?? [];
-          const typeLabel = meal.type === "dejeuner" ? "Dej." : "Souper";
+          const typeLabel = meal.type === "dejeuner" ? "Lunch" : "Souper";
 
           return (
             <div key={`${meal.date}-${meal.type}`} className="rounded-2xl bg-card shadow-sm border border-border/50 p-3.5">

@@ -2,13 +2,14 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { format, addWeeks, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowRight, Sun, Moon, AlertCircle, ShoppingCart } from "lucide-react";
+import { ArrowRight, Sun, Moon, ShoppingCart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getWeekMonday, getWeekDates, toDateString } from "@/lib/rotation";
 import { MiniWeekPreview } from "@/components/dashboard/mini-week-preview";
 import { ChoreChecklist } from "@/components/dashboard/chore-checklist";
 import { TodoWidget } from "@/components/dashboard/todo-widget";
 import { CalendarWidget } from "@/components/dashboard/calendar-widget";
+import { PendingActions } from "@/components/dashboard/pending-actions";
 import { UserAvatar } from "@/components/shared/user-avatar";
 
 export default async function DashboardPage() {
@@ -100,7 +101,7 @@ export default async function DashboardPage() {
   } | null = null;
   let tomorrowCookDinner = false;
   let tomorrowCookLunch = false;
-  let pendingActions: Array<{ text: string; href: string }> = [];
+  let pendingActions: Array<{ text: string; href: string; icon: "sun" | "moon" | "chore" | "grocery" | "todo" | "calendar" }> = [];
 
   let groceryItemCount = 0;
   let groceryUrgentCount = 0;
@@ -244,16 +245,18 @@ export default async function DashboardPage() {
 
     miniWeek = buildMiniWeek(getWeekDates(monday), allDinners, allLunches);
 
+    if (tomorrowCookLunch) {
+      pendingActions.push({
+        text: "Tu cuisines le lunch demain",
+        href: "/meals?tab=dejeuner",
+        icon: "sun",
+      });
+    }
     if (tomorrowCookDinner) {
       pendingActions.push({
         text: "Tu cuisines le souper demain",
         href: "/meals",
-      });
-    }
-    if (tomorrowCookLunch) {
-      pendingActions.push({
-        text: "Tu cuisines le dejeuner demain",
-        href: "/meals?tab=dejeuner",
+        icon: "moon",
       });
     }
 
@@ -262,6 +265,7 @@ export default async function DashboardPage() {
       pendingActions.push({
         text: `${pendingChores.length} tache${pendingChores.length > 1 ? "s" : ""} a faire`,
         href: "/chores",
+        icon: "chore",
       });
     }
 
@@ -269,6 +273,7 @@ export default async function DashboardPage() {
       pendingActions.push({
         text: `${groceryItemCount} article${groceryItemCount > 1 ? "s" : ""} a acheter`,
         href: "/grocery",
+        icon: "grocery",
       });
     }
   }
@@ -278,6 +283,7 @@ export default async function DashboardPage() {
     pendingActions.push({
       text: `${todoCount} tache${todoCount > 1 ? "s" : ""} a faire`,
       href: "/todos",
+      icon: "todo",
     });
   }
 
@@ -286,6 +292,7 @@ export default async function DashboardPage() {
     pendingActions.push({
       text: `${todayEventCount} evenement${todayEventCount > 1 ? "s" : ""} aujourd'hui`,
       href: "/agenda",
+      icon: "calendar",
     });
   }
 
@@ -338,21 +345,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Pending actions */}
-      {pendingActions.length > 0 && (
-        <div className="space-y-2">
-          {pendingActions.map((action) => (
-            <Link
-              key={action.text}
-              href={action.href}
-              className="flex items-center gap-3 rounded-2xl bg-primary/6 border border-primary/10 px-4 py-3 text-sm transition-all active:scale-[0.98]"
-            >
-              <AlertCircle className="h-4 w-4 text-primary shrink-0" />
-              <span className="flex-1">{action.text}</span>
-              <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            </Link>
-          ))}
-        </div>
-      )}
+      <PendingActions actions={pendingActions} />
 
       {/* Chores checklist */}
       {hasCurrentWeek && myChores.length > 0 && (
@@ -384,94 +377,99 @@ export default async function DashboardPage() {
       )}
 
       {/* Meals + Grocery */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Lunch */}
-        <Link href="/meals?tab=dejeuner" className="block">
-          <div className="rounded-2xl bg-card shadow-sm border border-border/50 p-3.5 transition-all active:scale-[0.97] space-y-3 min-h-[110px]">
-            <div className="flex items-center gap-1.5">
-              <Sun className="h-4 w-4 text-amber-500" />
-              <span className="text-xs font-semibold text-amber-600">Dejeuner</span>
-            </div>
+      <div className="rounded-2xl bg-card shadow-sm border border-border/50 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Repas</p>
+          <Link href="/meals" className="flex items-center gap-1 text-xs text-primary font-medium">
+            Tout voir
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="space-y-0.5">
+          {/* Lunch row */}
+          <Link
+            href="/meals?tab=dejeuner"
+            className="flex items-center gap-3 px-1 py-2.5 rounded-xl transition-all active:scale-[0.98] min-h-[44px]"
+          >
+            <Sun className="h-4 w-4 text-amber-500 shrink-0" />
             {!hasCurrentWeek ? (
-              <p className="text-xs text-muted-foreground">Pas de semaine</p>
+              <span className="text-sm text-muted-foreground">Pas de semaine</span>
             ) : !todayLunch ? (
-              <p className="text-xs text-muted-foreground">—</p>
+              <span className="text-sm text-muted-foreground">Lunch — pas prevu</span>
             ) : (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <UserAvatar src={todayLunch.cook.avatar_url} fallback={todayLunch.cook.avatar_emoji} size="sm" />
-                  <span className="text-sm font-semibold truncate">
+              <>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium truncate block">
+                    {todayLunch.recipe_name ?? "Pas encore decide"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <UserAvatar src={todayLunch.cook.avatar_url} fallback={todayLunch.cook.avatar_emoji} size="xs" />
+                  <span className="text-xs text-muted-foreground">
                     {todayLunch.isCook ? "Toi" : todayLunch.cook.display_name.split(" ")[0]}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">
-                  {todayLunch.recipe_name ?? "Pas encore decide"}
-                  {` · ${todayLunch.eaters.length} pers.`}
-                </p>
-              </div>
+              </>
             )}
-          </div>
-        </Link>
+          </Link>
 
-        {/* Dinner */}
-        <Link href="/meals" className="block">
-          <div className="rounded-2xl bg-card shadow-sm border border-border/50 p-3.5 transition-all active:scale-[0.97] space-y-3 min-h-[110px]">
-            <div className="flex items-center gap-1.5">
-              <Moon className="h-4 w-4 text-indigo-400" />
-              <span className="text-xs font-semibold text-indigo-500">Souper</span>
-            </div>
+          {/* Dinner row */}
+          <Link
+            href="/meals"
+            className="flex items-center gap-3 px-1 py-2.5 rounded-xl transition-all active:scale-[0.98] min-h-[44px]"
+          >
+            <Moon className="h-4 w-4 text-indigo-400 shrink-0" />
             {!hasCurrentWeek ? (
-              <p className="text-xs text-muted-foreground">Pas de semaine</p>
+              <span className="text-sm text-muted-foreground">Pas de semaine</span>
             ) : !todayDinner ? (
-              <p className="text-xs text-muted-foreground">—</p>
+              <span className="text-sm text-muted-foreground">Souper — pas prevu</span>
             ) : todayDinner.status === "skipped" ? (
-              <p className="text-xs text-muted-foreground">Passe</p>
+              <span className="text-sm text-muted-foreground line-through">Souper passe</span>
             ) : (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <UserAvatar src={todayDinner.cook.avatar_url} fallback={todayDinner.cook.avatar_emoji} size="sm" />
-                  <span className="text-sm font-semibold truncate">
+              <>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium truncate block">
+                    {todayDinner.recipe_name ?? todayDinner.note ?? "Pas encore decide"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <UserAvatar src={todayDinner.cook.avatar_url} fallback={todayDinner.cook.avatar_emoji} size="xs" />
+                  <span className="text-xs text-muted-foreground">
                     {todayDinner.isCook ? "Toi" : todayDinner.cook.display_name.split(" ")[0]}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">
-                  {todayDinner.recipe_name ?? todayDinner.note ?? "Pas encore decide"}
-                  {` · ${todayDinner.eaters.length} pers.`}
-                </p>
-              </div>
+              </>
             )}
-          </div>
-        </Link>
-      </div>
+          </Link>
+        </div>
 
-      {/* Grocery card */}
-      {hasCurrentWeek && (
-        <Link href="/grocery" className="block">
-          <div className="rounded-2xl bg-card shadow-sm border border-border/50 p-4 transition-all active:scale-[0.98]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
-                  <ShoppingCart className="h-4.5 w-4.5 text-emerald-600" />
-                </div>
-                <div>
-                  <span className="text-sm font-semibold">Courses</span>
-                  <p className="text-xs text-muted-foreground">
-                    {groceryItemCount} article{groceryItemCount !== 1 ? "s" : ""}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
+        {/* Grocery row inside same card */}
+        {hasCurrentWeek && (
+          <>
+            <div className="border-t border-border/40 my-2" />
+            <Link
+              href="/grocery"
+              className="flex items-center gap-3 px-1 py-2.5 rounded-xl transition-all active:scale-[0.98] min-h-[44px]"
+            >
+              <ShoppingCart className="h-4 w-4 text-emerald-600 shrink-0" />
+              <span className="text-sm font-medium flex-1">
+                Courses
+              </span>
+              <div className="flex items-center gap-2 shrink-0">
                 {groceryUrgentCount > 0 && (
-                  <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-2 py-1 rounded-full dark:bg-amber-900/30">
+                  <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full dark:bg-amber-900/30">
                     {groceryUrgentCount} urgent
                   </span>
                 )}
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">
+                  {groceryItemCount} article{groceryItemCount !== 1 ? "s" : ""}
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
-            </div>
-          </div>
-        </Link>
-      )}
+            </Link>
+          </>
+        )}
+      </div>
 
       {/* Mini week preview */}
       {(miniWeek || nextMiniWeek) && (
