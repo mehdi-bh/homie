@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Plus, Trash2, AlertTriangle, ShoppingCart, Check } from "lucide-react";
+import { Plus, Trash2, AlertTriangle, ShoppingCart, Check, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { StaplesBar } from "./staples-bar";
@@ -71,6 +71,11 @@ export function GroceryList({
   const [shoppingMode, setShoppingMode] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("recipe");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editQty, setEditQty] = useState("");
+  const [editUnit, setEditUnit] = useState("");
+  const editEscapedRef = useRef(false);
 
   const itemsRef = useRef(initialItems);
   if (initialItems !== itemsRef.current) {
@@ -158,6 +163,38 @@ export function GroceryList({
     await supabase.from("grocery_items").delete().eq("id", itemId);
   }
 
+  function startEditing(item: GroceryItem) {
+    setEditingId(item.id);
+    setEditName(item.name);
+    setEditQty(item.quantity != null ? String(item.quantity) : "");
+    setEditUnit(item.unit ?? "");
+  }
+
+  async function saveEdit(itemId: string) {
+    if (editEscapedRef.current) {
+      editEscapedRef.current = false;
+      return;
+    }
+    const trimmed = editName.trim();
+    if (!trimmed) {
+      setEditingId(null);
+      return;
+    }
+    const newQty = editQty ? parseFloat(editQty) || null : null;
+    const newUnit = editUnit || null;
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === itemId ? { ...i, name: trimmed, quantity: newQty, unit: newUnit } : i
+      )
+    );
+    setEditingId(null);
+    const supabase = createClient();
+    await supabase
+      .from("grocery_items")
+      .update({ name: trimmed, quantity: newQty, unit: newUnit })
+      .eq("id", itemId);
+  }
+
   async function finishShopping() {
     setArchiving(true);
     try {
@@ -173,11 +210,29 @@ export function GroceryList({
   }
 
   function renderItem(item: GroceryItem, showSource = false) {
+    const isEditing = editingId === item.id;
+
+    function handleEditBlur() {
+      setTimeout(() => {
+        if (editingId === item.id && !editEscapedRef.current) {
+          saveEdit(item.id);
+        }
+      }, 150);
+    }
+
+    function handleEditKeyDown(e: React.KeyboardEvent) {
+      if (e.key === "Enter") saveEdit(item.id);
+      if (e.key === "Escape") {
+        editEscapedRef.current = true;
+        setEditingId(null);
+      }
+    }
+
     return (
       <div
         key={item.id}
         className={cn(
-          "flex items-center gap-2 py-2 px-1",
+          "flex items-center gap-2 py-2.5 px-2",
           item.checked && "opacity-40"
         )}
       >
@@ -185,7 +240,7 @@ export function GroceryList({
           onClick={() => toggleChecked(item.id)}
           className={cn(
             "shrink-0 rounded-md border-2 flex items-center justify-center transition-colors",
-            shoppingMode ? "h-8 w-8" : "h-6 w-6",
+            shoppingMode ? "h-8 w-8" : "h-7 w-7",
             item.checked
               ? "bg-primary border-primary text-primary-foreground"
               : "border-muted-foreground/30"
@@ -195,43 +250,76 @@ export function GroceryList({
         </button>
 
         <div className="flex-1 min-w-0">
-          <p
-            className={cn(
-              "text-sm",
-              item.checked && "line-through text-muted-foreground"
-            )}
-          >
-            {item.name}
-            {item.quantity != null && (
-              <span className="text-muted-foreground ml-1">
-                ({item.quantity}
-                {item.unit ? ` ${item.unit}` : ""})
-              </span>
-            )}
-          </p>
-          {showSource && item.source_label && (
-            <p className="text-[10px] text-muted-foreground truncate">
-              {item.source_label}
-            </p>
+          {isEditing ? (
+            <div className="flex items-center gap-1.5" data-edit-id={item.id}>
+              <input
+                autoFocus
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                onBlur={handleEditBlur}
+                onKeyDown={handleEditKeyDown}
+                className="flex-1 min-w-0 bg-transparent text-sm outline-none border-b border-primary pb-0.5"
+                placeholder="Nom"
+              />
+              <input
+                value={editQty}
+                onChange={(e) => setEditQty(e.target.value)}
+                onBlur={handleEditBlur}
+                onKeyDown={handleEditKeyDown}
+                className="w-12 bg-transparent text-sm outline-none border-b border-primary pb-0.5 text-center"
+                placeholder="Qte"
+                inputMode="decimal"
+              />
+              <input
+                value={editUnit}
+                onChange={(e) => setEditUnit(e.target.value)}
+                onBlur={handleEditBlur}
+                onKeyDown={handleEditKeyDown}
+                className="w-10 bg-transparent text-sm outline-none border-b border-primary pb-0.5 text-center"
+                placeholder="u."
+              />
+            </div>
+          ) : (
+            <div onClick={() => startEditing(item)} className="cursor-text">
+              <p
+                className={cn(
+                  "text-sm",
+                  item.checked && "line-through text-muted-foreground"
+                )}
+              >
+                {item.name}
+                {item.quantity != null && (
+                  <span className="text-muted-foreground ml-1">
+                    ({item.quantity}
+                    {item.unit ? ` ${item.unit}` : ""})
+                  </span>
+                )}
+              </p>
+              {showSource && item.source_label && (
+                <p className="text-[10px] text-muted-foreground truncate">
+                  {item.source_label}
+                </p>
+              )}
+            </div>
           )}
         </div>
 
         <button
           onClick={() => toggleUrgent(item.id)}
           className={cn(
-            "shrink-0 h-6 w-6 rounded flex items-center justify-center transition-colors",
+            "shrink-0 h-10 w-10 rounded flex items-center justify-center transition-colors",
             item.priority === "urgent"
               ? "text-amber-500"
               : "text-muted-foreground/30 active:text-amber-500"
           )}
         >
-          <AlertTriangle className="h-3 w-3" />
+          <AlertTriangle className="h-4.5 w-4.5" />
         </button>
         <button
           onClick={() => deleteItem(item.id)}
-          className="shrink-0 h-6 w-6 rounded flex items-center justify-center text-muted-foreground/30 active:text-destructive transition-colors"
+          className="shrink-0 h-10 w-10 rounded flex items-center justify-center text-muted-foreground/30 active:text-destructive transition-colors"
         >
-          <Trash2 className="h-3 w-3" />
+          <Trash2 className="h-4.5 w-4.5" />
         </button>
       </div>
     );

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Sparkles, Loader2, Send } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
@@ -49,6 +49,11 @@ export function RecipeForm({
     initial?.ingredients ?? []
   );
   const [saving, setSaving] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   function addIngredient() {
     setIngredients((prev) => [
@@ -65,6 +70,39 @@ export function RecipeForm({
 
   function removeIngredient(index: number) {
     setIngredients((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function sendChat() {
+    const text = chatInput.trim();
+    if (!text) return;
+    const userMsg = { role: "user" as const, content: text };
+    const newMessages = [...chatMessages, userMsg];
+    setChatMessages(newMessages);
+    setChatInput("");
+    setGenerating(true);
+    setAiError("");
+    try {
+      const res = await fetch("/api/recipes/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: newMessages }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Erreur lors de la generation");
+      }
+      const data = await res.json();
+      setName(data.name);
+      if (data.notes) setNotes(data.notes);
+      setIngredients(data.ingredients);
+      const summary = `${data.name} — ${data.ingredients.length} ingredients`;
+      setChatMessages((prev) => [...prev, { role: "assistant", content: summary }]);
+      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    } catch (err: unknown) {
+      setAiError(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setGenerating(false);
+    }
   }
 
   async function handleSave() {
@@ -156,6 +194,70 @@ export function RecipeForm({
           {isEdit ? "Modifier la recette" : "Nouvelle recette"}
         </h1>
       </div>
+
+      {/* AI Chat */}
+      {!isEdit && (
+        <div className="rounded-xl border-2 border-dashed border-muted-foreground/20 p-4 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Sparkles className="h-4 w-4" />
+            Generation rapide
+          </div>
+
+          {chatMessages.length > 0 && (
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {chatMessages.map((msg, i) => (
+                <p
+                  key={i}
+                  className={`text-xs px-3 py-1.5 rounded-lg w-fit max-w-[85%] ${
+                    msg.role === "user"
+                      ? "bg-primary/10 text-foreground ml-auto"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {msg.content}
+                </p>
+              ))}
+              {generating && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Generation...
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+          )}
+
+          {aiError && (
+            <p className="text-xs text-destructive">{aiError}</p>
+          )}
+
+          <div className="flex gap-2">
+            <input
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendChat();
+                }
+              }}
+              placeholder={
+                chatMessages.length === 0
+                  ? "Decris ta recette: Pasta pesto poulet..."
+                  : "Modifier: enleve la creme, ajoute des champignons..."
+              }
+              className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            />
+            <button
+              onClick={sendChat}
+              disabled={generating || !chatInput.trim()}
+              className="shrink-0 rounded-lg bg-primary text-primary-foreground px-3 py-2 disabled:opacity-50 transition-colors active:bg-primary/90"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Name */}
       <div className="space-y-1.5">

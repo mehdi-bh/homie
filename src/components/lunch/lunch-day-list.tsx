@@ -170,12 +170,14 @@ export function LunchDayList({
           const dayLabel = format(parseISO(slot.date), "EEEE d", {
             locale: fr,
           });
+          const hasRecipe = !!slot.recipe_id;
 
           return (
             <div
               key={slot.id}
               className={cn(
                 "rounded-xl border p-4",
+                !isSkipped && !isPast && !hasRecipe && "border-dashed border-muted-foreground/25 bg-muted/30",
                 isToday && "ring-2 ring-primary/20",
                 isPast && "opacity-50",
                 isSkipped && "opacity-40"
