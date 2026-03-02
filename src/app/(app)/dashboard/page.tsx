@@ -103,7 +103,6 @@ export default async function DashboardPage() {
   let tomorrowCookLunch = false;
   let pendingActions: Array<{ text: string; href: string }> = [];
 
-  // Grocery data
   let groceryItemCount = 0;
   let groceryUrgentCount = 0;
   let groceryDutyUserId: string | null = null;
@@ -191,13 +190,11 @@ export default async function DashboardPage() {
 
     myChores = choresData ?? [];
 
-    // Grocery
     const uncheckedItems = groceryItems ?? [];
     groceryItemCount = uncheckedItems.length;
     groceryUrgentCount = uncheckedItems.filter((i) => i.priority === "urgent").length;
     groceryDutyUserId = grocerySlot?.assigned_to ?? null;
 
-    // Today's dinner
     if (dinnerData) {
       const cook = dinnerData.cook as unknown as ProfileInfo;
       todayDinner = {
@@ -210,7 +207,6 @@ export default async function DashboardPage() {
       };
     }
 
-    // Today's lunch (new model - recipe + eaters)
     if (lunchData) {
       const cook = lunchData.cook as unknown as ProfileInfo;
       todayLunch = {
@@ -221,11 +217,9 @@ export default async function DashboardPage() {
       };
     }
 
-    // Tomorrow checks
     tomorrowCookDinner = tomorrowDinnerData?.cook_id === user.id;
     tomorrowCookLunch = tomorrowLunchData?.cook_id === user.id;
 
-    // Build mini week
     function buildMiniWeek(
       dates: Date[],
       dinners: typeof allDinners,
@@ -251,7 +245,6 @@ export default async function DashboardPage() {
 
     miniWeek = buildMiniWeek(getWeekDates(monday), allDinners, allLunches);
 
-    // Pending actions
     if (tomorrowCookDinner) {
       pendingActions.push({
         text: "Tu cuisines le souper demain",
@@ -273,7 +266,6 @@ export default async function DashboardPage() {
       });
     }
 
-    // Grocery duty action
     if (groceryDutyUserId === user.id && groceryItemCount > 0) {
       pendingActions.push({
         text: `${groceryItemCount} article${groceryItemCount > 1 ? "s" : ""} a acheter`,
@@ -282,7 +274,6 @@ export default async function DashboardPage() {
     }
   }
 
-  // Todo pending action
   const todoCount = pendingTodos?.length ?? 0;
   if (todoCount > 0) {
     pendingActions.push({
@@ -291,7 +282,6 @@ export default async function DashboardPage() {
     });
   }
 
-  // Today's events action
   const todayEventCount = todayEvents?.length ?? 0;
   if (todayEventCount > 0) {
     pendingActions.push({
@@ -300,7 +290,6 @@ export default async function DashboardPage() {
     });
   }
 
-  // Fetch next week mini data
   if (hasNextWeek) {
     const [{ data: nextDinners }, { data: nextLunches }] = await Promise.all([
       supabase
@@ -341,26 +330,26 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-5">
       {/* Greeting */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3.5">
         <UserAvatar src={profile?.avatar_url} fallback={emoji} size="lg" />
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{name}</h1>
+          <h1 className="text-[22px] font-bold tracking-tight">{name}</h1>
           <p className="text-muted-foreground text-sm capitalize">{todayLabel}</p>
         </div>
       </div>
 
       {/* Pending actions */}
       {pendingActions.length > 0 && (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {pendingActions.map((action) => (
             <Link
               key={action.text}
               href={action.href}
-              className="flex items-center gap-2 rounded-lg bg-primary/5 border border-primary/10 px-3 py-2.5 text-sm transition-colors active:bg-primary/10"
+              className="flex items-center gap-3 rounded-2xl bg-primary/6 border border-primary/10 px-4 py-3 text-sm transition-all active:scale-[0.98]"
             >
               <AlertCircle className="h-4 w-4 text-primary shrink-0" />
               <span className="flex-1">{action.text}</span>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </Link>
           ))}
         </div>
@@ -369,9 +358,9 @@ export default async function DashboardPage() {
       {/* Chores checklist */}
       {hasCurrentWeek && myChores.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Mes taches</p>
-            <Link href="/chores" className="text-xs text-muted-foreground hover:text-foreground">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Mes taches</p>
+            <Link href="/chores" className="text-xs text-primary font-medium">
               Tout voir
             </Link>
           </div>
@@ -399,20 +388,20 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 gap-3">
         {/* Lunch */}
         <Link href="/meals?tab=dejeuner" className="block">
-          <div className="rounded-xl border p-3 transition-colors active:bg-muted/50 space-y-2.5">
+          <div className="rounded-2xl bg-card shadow-sm border border-border/50 p-3.5 transition-all active:scale-[0.97] space-y-3 min-h-[110px]">
             <div className="flex items-center gap-1.5">
-              <Sun className="h-3.5 w-3.5 text-amber-500" />
-              <span className="text-xs font-medium text-amber-600">Dejeuner</span>
+              <Sun className="h-4 w-4 text-amber-500" />
+              <span className="text-xs font-semibold text-amber-600">Dejeuner</span>
             </div>
             {!hasCurrentWeek ? (
               <p className="text-xs text-muted-foreground">Pas de semaine</p>
             ) : !todayLunch ? (
               <p className="text-xs text-muted-foreground">—</p>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <UserAvatar src={todayLunch.cook.avatar_url} fallback={todayLunch.cook.avatar_emoji} size="sm" />
-                  <span className="text-sm font-medium truncate">
+                  <span className="text-sm font-semibold truncate">
                     {todayLunch.isCook ? "Toi" : todayLunch.cook.display_name.split(" ")[0]}
                   </span>
                 </div>
@@ -427,10 +416,10 @@ export default async function DashboardPage() {
 
         {/* Dinner */}
         <Link href="/meals" className="block">
-          <div className="rounded-xl border p-3 transition-colors active:bg-muted/50 space-y-2.5">
+          <div className="rounded-2xl bg-card shadow-sm border border-border/50 p-3.5 transition-all active:scale-[0.97] space-y-3 min-h-[110px]">
             <div className="flex items-center gap-1.5">
-              <Moon className="h-3.5 w-3.5 text-indigo-400" />
-              <span className="text-xs font-medium text-indigo-500">Souper</span>
+              <Moon className="h-4 w-4 text-indigo-400" />
+              <span className="text-xs font-semibold text-indigo-500">Souper</span>
             </div>
             {!hasCurrentWeek ? (
               <p className="text-xs text-muted-foreground">Pas de semaine</p>
@@ -439,10 +428,10 @@ export default async function DashboardPage() {
             ) : todayDinner.status === "skipped" ? (
               <p className="text-xs text-muted-foreground">Passe</p>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <UserAvatar src={todayDinner.cook.avatar_url} fallback={todayDinner.cook.avatar_emoji} size="sm" />
-                  <span className="text-sm font-medium truncate">
+                  <span className="text-sm font-semibold truncate">
                     {todayDinner.isCook ? "Toi" : todayDinner.cook.display_name.split(" ")[0]}
                   </span>
                 </div>
@@ -459,22 +448,26 @@ export default async function DashboardPage() {
       {/* Grocery card */}
       {hasCurrentWeek && (
         <Link href="/grocery" className="block">
-          <div className="rounded-xl border p-3 transition-colors active:bg-muted/50">
+          <div className="rounded-2xl bg-card shadow-sm border border-border/50 p-4 transition-all active:scale-[0.98]">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium">Epicerie</span>
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
+                  <ShoppingCart className="h-4.5 w-4.5 text-emerald-600" />
+                </div>
+                <div>
+                  <span className="text-sm font-semibold">Courses</span>
+                  <p className="text-xs text-muted-foreground">
+                    {groceryItemCount} article{groceryItemCount !== 1 ? "s" : ""}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 {groceryUrgentCount > 0 && (
-                  <span className="text-[10px] font-medium text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full dark:bg-amber-900/30">
+                  <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-2 py-1 rounded-full dark:bg-amber-900/30">
                     {groceryUrgentCount} urgent
                   </span>
                 )}
-                <span className="text-xs text-muted-foreground">
-                  {groceryItemCount} article{groceryItemCount !== 1 ? "s" : ""}
-                </span>
-                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
               </div>
             </div>
           </div>
@@ -511,7 +504,7 @@ export default async function DashboardPage() {
       {/* Settings link */}
       <Link
         href="/settings"
-        className="block text-sm text-muted-foreground text-center hover:underline"
+        className="block text-sm text-muted-foreground text-center py-2 active:text-foreground transition-colors"
       >
         Parametres
       </Link>

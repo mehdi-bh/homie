@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Check, RotateCcw } from "lucide-react";
 import { format, isToday, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
+import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn } from "@/lib/utils";
@@ -73,7 +74,6 @@ export function ChoreList({
 }) {
   const [chores, setChores] = useState(initialChores);
 
-  // Sync with server data when props change (realtime refresh)
   const choresRef = useRef(initialChores);
   if (initialChores !== choresRef.current) {
     choresRef.current = initialChores;
@@ -84,7 +84,6 @@ export function ChoreList({
     const isDone = chore.status === "done";
     const newStatus = isDone ? "pending" : "done";
 
-    // Optimistic update
     setChores((prev) =>
       prev.map((c) =>
         c.id === chore.id
@@ -106,7 +105,7 @@ export function ChoreList({
   if (chores.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-8 text-center">
-        No chores this week. Generate a week first.
+        Aucune tache cette semaine. Generez une semaine d&apos;abord.
       </p>
     );
   }
@@ -116,10 +115,10 @@ export function ChoreList({
   return (
     <div className="space-y-5">
       {groups.map((group) => (
-        <div key={group.label} className="space-y-3">
+        <div key={group.label} className="space-y-2.5">
           <h3
             className={cn(
-              "text-sm font-semibold capitalize",
+              "text-xs font-semibold uppercase tracking-wider",
               group.isToday
                 ? "text-primary"
                 : "text-muted-foreground"
@@ -127,7 +126,7 @@ export function ChoreList({
           >
             {group.label}
             {group.isToday && (
-              <span className="ml-2 text-xs font-normal">(aujourd&apos;hui)</span>
+              <span className="ml-2 text-xs font-normal lowercase">(aujourd&apos;hui)</span>
             )}
           </h3>
 
@@ -139,8 +138,8 @@ export function ChoreList({
               <div
                 key={chore.id}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl border p-4 transition-colors",
-                  isDone && "bg-muted/50"
+                  "flex items-center gap-3 rounded-2xl bg-card shadow-sm border border-border/50 p-4 transition-all min-h-[64px]",
+                  isDone && "bg-muted/30"
                 )}
                 style={{
                   borderLeftWidth: 4,
@@ -150,38 +149,48 @@ export function ChoreList({
                 <button
                   onClick={() => toggleChore(chore)}
                   className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all active:scale-95",
+                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 transition-all active:scale-90",
                     isDone
-                      ? "border-green-500 bg-green-500 text-white"
-                      : "border-muted-foreground/30"
+                      ? "border-emerald-500 bg-emerald-500 text-white"
+                      : "border-muted-foreground/25"
                   )}
                 >
-                  {isDone ? <Check className="h-5 w-5" /> : null}
+                  <AnimatePresence>
+                    {isDone && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                      >
+                        <Check className="h-5 w-5" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </button>
 
                 <div className="flex-1 min-w-0">
                   <p
                     className={cn(
-                      "font-medium capitalize",
+                      "font-semibold capitalize",
                       isDone && "line-through text-muted-foreground"
                     )}
                   >
                     {chore.chore_name}
                   </p>
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <UserAvatar src={chore.assigned_to.avatar_url} fallback={chore.assigned_to.avatar_emoji} size="sm" />
-                    {chore.assigned_to.display_name}
+                  <div className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                    <UserAvatar src={chore.assigned_to.avatar_url} fallback={chore.assigned_to.avatar_emoji} size="sm" className="h-5 w-5 text-xs" />
+                    <span>{chore.assigned_to.display_name}</span>
                     {isMine && (
-                      <span className="ml-1 text-xs opacity-60">(you)</span>
+                      <span className="text-xs opacity-60">(toi)</span>
                     )}
-                  </p>
+                  </div>
                 </div>
 
                 {isDone && (
                   <button
                     onClick={() => toggleChore(chore)}
-                    className="text-muted-foreground p-2"
-                    title="Mark as not done"
+                    className="text-muted-foreground p-2 rounded-xl active:bg-muted transition-all"
+                    title="Marquer comme non fait"
                   >
                     <RotateCcw className="h-4 w-4" />
                   </button>

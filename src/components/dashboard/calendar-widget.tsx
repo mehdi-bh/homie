@@ -29,45 +29,45 @@ export function CalendarWidget({
 
   function renderEvent(event: CalendarEvent) {
     return (
-      <div key={event.id} className="flex items-center gap-2 py-0.5">
+      <div key={event.id} className="flex items-center gap-2.5 py-1">
         <div
           className={cn(
             "h-2 w-2 rounded-full shrink-0",
             CATEGORY_DOT_COLORS[event.category] ?? CATEGORY_DOT_COLORS.other
           )}
         />
-        <span className="text-xs text-muted-foreground shrink-0">
+        <span className="text-xs text-muted-foreground shrink-0 w-11">
           {event.all_day
             ? "Journee"
             : event.start_time
               ? event.start_time.slice(0, 5)
               : ""}
         </span>
-        <span className="text-sm truncate">{event.title}</span>
+        <span className="text-sm truncate font-medium">{event.title}</span>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border p-3">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-medium text-muted-foreground">Agenda</p>
-        <Link href="/agenda" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+    <div className="rounded-2xl bg-card shadow-sm border border-border/50 p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Agenda</p>
+        <Link href="/agenda" className="flex items-center gap-1 text-xs text-primary font-medium">
           Tout voir
           <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
       {hasEvents ? (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {todayEvents.length > 0 && (
             <div>
-              <p className="text-[10px] font-medium text-muted-foreground mb-0.5">Aujourd&apos;hui</p>
+              <p className="text-[11px] font-semibold text-muted-foreground mb-1">Aujourd&apos;hui</p>
               {todayEvents.map(renderEvent)}
             </div>
           )}
           {tomorrowEvents.length > 0 && (
             <div>
-              <p className="text-[10px] font-medium text-muted-foreground mb-0.5">Demain</p>
+              <p className="text-[11px] font-semibold text-muted-foreground mb-1">Demain</p>
               {tomorrowEvents.map(renderEvent)}
             </div>
           )}

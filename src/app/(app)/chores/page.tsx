@@ -71,16 +71,16 @@ export default async function ChoresPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Chores"
+        title="Taches menageres"
         description={
           totalCount > 0
-            ? `${doneCount}/${totalCount} done this week`
-            : "No week generated yet"
+            ? `${doneCount}/${totalCount} faites cette semaine`
+            : "Aucune semaine generee"
         }
         action={
           <Link
             href="/chores/manage"
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            className="h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground active:bg-muted transition-all active:scale-90"
           >
             <Settings className="h-5 w-5" />
           </Link>

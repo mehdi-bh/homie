@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 
 const sizes = {
-  sm: "h-6 w-6 text-sm",
-  md: "h-9 w-9 text-base",
-  lg: "h-16 w-16 text-2xl",
+  sm: "h-7 w-7 text-sm",
+  md: "h-10 w-10 text-lg",
+  lg: "h-14 w-14 text-2xl",
 } as const;
 
 export function UserAvatar({
@@ -23,7 +23,7 @@ export function UserAvatar({
         src={src}
         alt=""
         className={cn(
-          "rounded-full object-cover shrink-0",
+          "rounded-full object-cover shrink-0 ring-2 ring-background",
           sizes[size],
           className
         )}
@@ -34,7 +34,7 @@ export function UserAvatar({
   return (
     <span
       className={cn(
-        "flex items-center justify-center shrink-0 leading-none",
+        "flex items-center justify-center shrink-0 leading-none rounded-full bg-muted/60",
         sizes[size],
         className
       )}

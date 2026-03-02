@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toDateString } from "@/lib/rotation";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -179,11 +179,11 @@ export function DinnerSlotList({
             <div
               key={slot.id}
               className={cn(
-                "rounded-xl border p-4",
-                !isSkipped && !isPast && !hasRecipe && "border-dashed border-muted-foreground/25 bg-muted/30",
-                isToday && "ring-2 ring-primary/20",
-                isPast && "opacity-50",
-                isSkipped && "opacity-40"
+                "rounded-2xl bg-card shadow-sm border border-border/50 p-4",
+                !isSkipped && !isPast && !hasRecipe && "border-dashed border-muted-foreground/20 bg-muted/20",
+                isToday && "ring-2 ring-primary/20 shadow-md",
+                isPast && "opacity-45",
+                isSkipped && "opacity-35"
               )}
               style={{
                 borderLeftWidth: 4,
@@ -191,27 +191,28 @@ export function DinnerSlotList({
               }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-3">
                 <div>
-                  <p className="font-medium capitalize text-sm">{dayLabel}</p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <p className="font-bold capitalize text-sm">{dayLabel}</p>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
                     <UserAvatar
                       src={slot.cook.avatar_url}
                       fallback={slot.cook.avatar_emoji}
                       size="sm"
+                      className="h-5 w-5 text-xs"
                     />
-                    {slot.cook.display_name}
-                    {isCook && <span className="opacity-60"> (toi)</span>}
-                  </p>
+                    <span>{slot.cook.display_name}</span>
+                    {isCook && <span className="opacity-60">(toi)</span>}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {isToday && (
-                    <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-1 rounded-full">
                       Aujourd&apos;hui
                     </span>
                   )}
                   {isSkipped && (
-                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full">
                       Passe
                     </span>
                   )}
@@ -220,19 +221,19 @@ export function DinnerSlotList({
 
               {!isSkipped && (
                 <>
-                  {/* Recipe name (tappable to pick) */}
-                  <div className="mb-2">
+                  {/* Recipe name */}
+                  <div className="mb-3">
                     <button
                       onClick={() => {
                         if (isCook && !isPast) setPickerSlotId(slot.id);
                       }}
                       disabled={!isCook || isPast}
                       className={cn(
-                        "text-sm w-full text-left",
+                        "text-sm w-full text-left rounded-xl px-3 py-2.5 min-h-[44px] flex items-center transition-all",
                         slot.recipe_name
-                          ? "text-foreground font-medium"
-                          : "text-muted-foreground italic",
-                        isCook && !isPast && "cursor-pointer"
+                          ? "text-foreground font-semibold bg-muted/30"
+                          : "text-muted-foreground italic bg-muted/20",
+                        isCook && !isPast && "active:scale-[0.98] active:bg-muted/50"
                       )}
                     >
                       {slot.recipe_name ||
@@ -243,7 +244,7 @@ export function DinnerSlotList({
                     {slot.recipe_name && isCook && !isPast && (
                       <button
                         onClick={() => clearRecipe(slot.id)}
-                        className="text-[10px] text-muted-foreground hover:text-foreground mt-0.5"
+                        className="text-[10px] text-muted-foreground hover:text-foreground mt-1 ml-3"
                       >
                         Retirer la recette
                       </button>
@@ -255,7 +256,7 @@ export function DinnerSlotList({
                     {editing === slot.id ? (
                       <input
                         autoFocus
-                        className="w-full bg-transparent text-xs outline-none border-b border-primary pb-0.5 text-muted-foreground"
+                        className="w-full bg-transparent text-sm outline-none border-b-2 border-primary pb-1 text-muted-foreground px-1"
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
                         onBlur={() => {
@@ -277,10 +278,10 @@ export function DinnerSlotList({
                     ) : (
                       <p
                         className={cn(
-                          "text-xs",
+                          "text-xs px-1",
                           slot.note
                             ? "text-muted-foreground"
-                            : "text-muted-foreground/50 italic",
+                            : "text-muted-foreground/40 italic",
                           isCook && !isPast && "cursor-text"
                         )}
                         onClick={() => {
@@ -297,7 +298,7 @@ export function DinnerSlotList({
                   </div>
 
                   {/* Eaters */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     {profiles.map((profile) => {
                       const isEating = slot.eaters.includes(profile.id);
                       return (
@@ -309,10 +310,10 @@ export function DinnerSlotList({
                           }
                           disabled={isPast}
                           className={cn(
-                            "h-9 w-9 rounded-full flex items-center justify-center text-sm transition-all border-2 active:scale-95",
+                            "h-10 w-10 rounded-full flex items-center justify-center text-sm transition-all border-2 active:scale-90",
                             isEating
                               ? "opacity-100"
-                              : "border-transparent opacity-25"
+                              : "border-transparent opacity-20"
                           )}
                           style={{
                             borderColor: isEating
@@ -329,7 +330,7 @@ export function DinnerSlotList({
                         </button>
                       );
                     })}
-                    <span className="text-xs text-muted-foreground ml-1">
+                    <span className="text-xs text-muted-foreground ml-1 font-medium">
                       {slot.eaters.length} pers.
                     </span>
                   </div>
@@ -342,7 +343,7 @@ export function DinnerSlotList({
                       <button
                         onClick={() => pushToGrocery(slot.id)}
                         disabled={pushing === slot.id}
-                        className="mt-2 flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                        className="mt-3 flex items-center gap-2 text-xs text-primary font-medium bg-primary/6 rounded-xl px-3 py-2.5 min-h-[40px] transition-all active:scale-[0.97] disabled:opacity-50 w-full justify-center"
                       >
                         <ShoppingCart className="h-3.5 w-3.5" />
                         {pushing === slot.id
@@ -351,9 +352,10 @@ export function DinnerSlotList({
                       </button>
                     )}
                   {slot.ingredients_pushed && (
-                    <p className="mt-2 text-[10px] text-muted-foreground">
-                      Ingredients envoyes a l&apos;epicerie
-                    </p>
+                    <div className="mt-3 flex items-center gap-1.5 text-[11px] text-emerald-600 font-medium">
+                      <Check className="h-3.5 w-3.5" />
+                      Ingredients envoyes
+                    </div>
                   )}
                 </>
               )}
@@ -363,7 +365,7 @@ export function DinnerSlotList({
                 <div className="mt-3 flex justify-end">
                   <button
                     onClick={() => toggleSkip(slot.id, slot.status)}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
+                    className="text-xs text-muted-foreground font-medium px-3 py-2 rounded-xl transition-all active:bg-muted min-h-[36px]"
                   >
                     {isSkipped ? "Retablir" : "Passer"}
                   </button>

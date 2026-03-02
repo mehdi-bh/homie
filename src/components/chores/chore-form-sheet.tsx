@@ -173,30 +173,31 @@ export function ChoreFormSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-5 px-4 pb-4">
+        <div className="space-y-5 px-4 pb-6">
           {/* Name */}
           <div className="space-y-2">
-            <Label>Nom</Label>
-            <Input
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nom</label>
+            <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Aspirateur"
+              className="w-full rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 min-h-[48px] shadow-sm"
             />
           </div>
 
           {/* Icon */}
           <div className="space-y-2">
-            <Label>Icône</Label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Icone</label>
             <div className="flex gap-2 flex-wrap">
               {ICONS.map((i) => (
                 <button
                   key={i}
                   type="button"
                   className={cn(
-                    "h-10 w-10 rounded-lg text-xl flex items-center justify-center transition-all",
+                    "h-11 w-11 rounded-xl text-xl flex items-center justify-center transition-all active:scale-90",
                     icon === i
                       ? "bg-primary/10 ring-2 ring-primary scale-110"
-                      : "bg-muted hover:bg-muted/80"
+                      : "bg-muted/50"
                   )}
                   onClick={() => setIcon(i)}
                 >
@@ -208,15 +209,15 @@ export function ChoreFormSheet({
 
           {/* Frequency */}
           <div className="space-y-2">
-            <Label>Quand</Label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Quand</label>
             <div className="flex gap-2 flex-wrap">
               <button
                 type="button"
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-sm font-medium transition-all",
+                  "rounded-xl px-3.5 py-2 text-sm font-medium transition-all active:scale-95 min-h-[36px]",
                   isWeekly
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/50 text-muted-foreground"
                 )}
                 onClick={() => toggleDay("weekly")}
               >
@@ -227,10 +228,10 @@ export function ChoreFormSheet({
                   key={d.value}
                   type="button"
                   className={cn(
-                    "rounded-full px-3 py-1.5 text-sm font-medium transition-all",
+                    "rounded-xl px-3 py-2 text-sm font-medium transition-all active:scale-95 min-h-[36px]",
                     selectedDays.includes(d.value)
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted/50 text-muted-foreground"
                   )}
                   onClick={() => toggleDay(d.value)}
                 >
@@ -242,15 +243,15 @@ export function ChoreFormSheet({
 
           {/* Assignment mode */}
           <div className="space-y-3">
-            <Label>Qui</Label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Qui</label>
             <div className="flex gap-2">
               <button
                 type="button"
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-sm font-medium transition-all",
+                  "rounded-xl px-3.5 py-2 text-sm font-medium transition-all active:scale-95 min-h-[36px]",
                   assignmentMode === "rotation"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/50 text-muted-foreground"
                 )}
                 onClick={() => setAssignmentMode("rotation")}
               >
@@ -259,10 +260,10 @@ export function ChoreFormSheet({
               <button
                 type="button"
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-sm font-medium transition-all",
+                  "rounded-xl px-3.5 py-2 text-sm font-medium transition-all active:scale-95 min-h-[36px]",
                   assignmentMode === "fixed"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/50 text-muted-foreground"
                 )}
                 onClick={() => setAssignmentMode("fixed")}
               >
@@ -272,14 +273,14 @@ export function ChoreFormSheet({
                 <button
                   type="button"
                   className={cn(
-                    "rounded-full px-3 py-1.5 text-sm font-medium transition-all",
+                    "rounded-xl px-3.5 py-2 text-sm font-medium transition-all active:scale-95 min-h-[36px]",
                     assignmentMode === "custom"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted/50 text-muted-foreground"
                   )}
                   onClick={() => setAssignmentMode("custom")}
                 >
-                  Personnalisé
+                  Personnalise
                 </button>
               )}
             </div>
@@ -301,7 +302,7 @@ export function ChoreFormSheet({
                       key={p.id}
                       type="button"
                       className={cn(
-                        "flex flex-col items-center gap-1 rounded-xl p-2 transition-all min-w-[60px]",
+                        "flex flex-col items-center gap-1 rounded-2xl p-3 transition-all active:scale-95 min-w-[64px]",
                         isSelected
                           ? "bg-primary/10 ring-2 ring-primary"
                           : "opacity-40"
@@ -319,7 +320,7 @@ export function ChoreFormSheet({
                         {p.display_name}
                       </span>
                       {isFirst && (
-                        <span className="text-[10px] text-primary font-medium">
+                        <span className="text-[10px] text-primary font-semibold">
                           Commence
                         </span>
                       )}
@@ -331,10 +332,10 @@ export function ChoreFormSheet({
 
             {/* Custom: per-day person mapping */}
             {assignmentMode === "custom" && !isWeekly && (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {selectedDays.map((day) => (
                   <div key={day} className="flex items-center gap-3">
-                    <span className="text-sm font-medium w-10">
+                    <span className="text-sm font-semibold w-10">
                       {DAY_LABELS[day]}
                     </span>
                     <div className="flex gap-2">
@@ -343,7 +344,7 @@ export function ChoreFormSheet({
                           key={p.id}
                           type="button"
                           className={cn(
-                            "h-9 w-9 rounded-full text-lg flex items-center justify-center transition-all",
+                            "h-10 w-10 rounded-xl text-lg flex items-center justify-center transition-all active:scale-90",
                             dayAssignments[day] === p.id
                               ? "ring-2 ring-primary scale-110"
                               : "opacity-30"
@@ -361,13 +362,13 @@ export function ChoreFormSheet({
           </div>
 
           {/* Save */}
-          <Button
+          <button
             onClick={handleSave}
             disabled={!name.trim() || saving}
-            className="w-full"
+            className="w-full rounded-2xl bg-primary text-primary-foreground py-3.5 text-sm font-semibold disabled:opacity-50 transition-all active:scale-[0.98] min-h-[52px] shadow-sm"
           >
             {saving ? "Enregistrement..." : isEdit ? "Modifier" : "Ajouter"}
-          </Button>
+          </button>
         </div>
       </SheetContent>
     </Sheet>

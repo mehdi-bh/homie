@@ -54,7 +54,7 @@ export function WeekGrid({
   const todayStr = toDateString(new Date());
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {days.map((day) => {
         const isToday = day.date === todayStr;
         const isPast = day.date < todayStr;
@@ -67,44 +67,44 @@ export function WeekGrid({
           <div
             key={day.date}
             className={cn(
-              "rounded-xl border p-3 transition-colors",
-              isToday && "ring-2 ring-primary/20 bg-primary/[0.02]",
-              isPast && "opacity-50"
+              "rounded-2xl bg-card shadow-sm border border-border/50 p-3.5 transition-all",
+              isToday && "ring-2 ring-primary/20 shadow-md",
+              isPast && "opacity-45"
             )}
           >
             {/* Day header */}
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2.5">
               <span
                 className={cn(
-                  "text-sm font-semibold capitalize",
+                  "text-sm font-bold capitalize",
                   isToday ? "text-primary" : "text-foreground"
                 )}
               >
                 {dayLabel}
               </span>
               {isToday && (
-                <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                   Aujourd&apos;hui
                 </span>
               )}
             </div>
 
             {/* Meals row */}
-            <div className="flex gap-3">
+            <div className="flex gap-2.5">
               {/* Lunch */}
               <button
                 onClick={() => router.push("/lunch")}
-                className="flex-1 flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-2 min-h-[40px] transition-colors active:bg-muted"
+                className="flex-1 flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-2.5 min-h-[48px] transition-all active:scale-[0.97] active:bg-muted"
               >
                 {l && l.status !== "skipped" ? (
                   <>
                     <UserAvatar src={l.cookAvatarUrl} fallback={l.cookEmoji} size="sm" />
                     <div className="flex-1 min-w-0 text-left">
-                      <p className="text-[10px] text-muted-foreground leading-none mb-0.5">
+                      <p className="text-[10px] text-muted-foreground leading-none mb-0.5 font-medium">
                         Dej.
                       </p>
                       <p
-                        className="text-xs font-medium truncate"
+                        className="text-xs font-semibold truncate"
                         style={{ color: l.cookColor }}
                       >
                         {l.cookId === currentUserId
@@ -115,7 +115,7 @@ export function WeekGrid({
                     </div>
                   </>
                 ) : (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground font-medium">
                     {l?.status === "skipped" ? "Dej. — passe" : "Dej."}
                   </span>
                 )}
@@ -124,17 +124,17 @@ export function WeekGrid({
               {/* Dinner */}
               <button
                 onClick={() => router.push("/dinner")}
-                className="flex-1 flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-2 min-h-[40px] transition-colors active:bg-muted"
+                className="flex-1 flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-2.5 min-h-[48px] transition-all active:scale-[0.97] active:bg-muted"
               >
                 {d && d.status !== "skipped" ? (
                   <>
                     <UserAvatar src={d.cookAvatarUrl} fallback={d.cookEmoji} size="sm" />
                     <div className="flex-1 min-w-0 text-left">
-                      <p className="text-[10px] text-muted-foreground leading-none mb-0.5">
+                      <p className="text-[10px] text-muted-foreground leading-none mb-0.5 font-medium">
                         Souper
                       </p>
                       <p
-                        className="text-xs font-medium truncate"
+                        className="text-xs font-semibold truncate"
                         style={{ color: d.cookColor }}
                       >
                         {d.cookId === currentUserId
@@ -145,16 +145,16 @@ export function WeekGrid({
                     </div>
                   </>
                 ) : (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground font-medium">
                     {d?.status === "skipped" ? "Souper — passe" : "Souper"}
                   </span>
                 )}
               </button>
             </div>
 
-            {/* Chores for this day (inline) */}
+            {/* Chores for this day */}
             {day.chores.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
+              <div className="flex flex-wrap gap-1.5 mt-2.5">
                 {day.chores.map((chore) => {
                   const isDone = chore.status === "done";
                   const isMine = chore.assignedTo.id === currentUserId;
@@ -164,16 +164,16 @@ export function WeekGrid({
                       key={chore.name}
                       onClick={() => router.push("/chores")}
                       className={cn(
-                        "flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors active:bg-muted border",
-                        isDone ? "bg-muted/30 text-muted-foreground" : "bg-background"
+                        "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs transition-all active:scale-[0.95] border min-h-[32px]",
+                        isDone ? "bg-muted/30 text-muted-foreground" : "bg-card"
                       )}
-                      style={{ borderColor: chore.assignedTo.color + "40" }}
+                      style={{ borderColor: chore.assignedTo.color + "30" }}
                     >
                       <UserAvatar src={chore.assignedTo.avatar_url} fallback={chore.assignedTo.avatar_emoji} size="sm" className="h-4 w-4 text-xs" />
-                      <span className={cn("capitalize", isDone && "line-through")}>
+                      <span className={cn("capitalize font-medium", isDone && "line-through")}>
                         {chore.name}
                       </span>
-                      {isDone && <span className="text-green-600">✓</span>}
+                      {isDone && <span className="text-emerald-600">✓</span>}
                       {isMine && !isDone && (
                         <span className="text-muted-foreground">(toi)</span>
                       )}

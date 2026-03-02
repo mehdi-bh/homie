@@ -135,27 +135,27 @@ export function EventForm({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-4 px-4 pb-4">
+        <div className="space-y-4 px-4 pb-6">
           {/* Title */}
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Titre"
-            className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 min-h-[48px] shadow-sm"
             autoFocus
           />
 
           {/* Category pills */}
-          <div className="flex gap-1.5 flex-wrap">
+          <div className="flex gap-2 flex-wrap">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.value}
                 onClick={() => setCategory(cat.value)}
                 className={cn(
-                  "text-xs px-2.5 py-1 rounded-full transition-colors border",
+                  "text-xs px-3 py-2 rounded-xl transition-all active:scale-95 min-h-[36px] font-medium",
                   category === cat.value
-                    ? "bg-foreground text-background font-medium border-foreground"
-                    : "text-muted-foreground border-transparent"
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground bg-muted/50"
                 )}
               >
                 {cat.label}
@@ -165,12 +165,12 @@ export function EventForm({
 
           {/* Car presets */}
           {category === "car" && (
-            <div className="flex gap-1.5 flex-wrap">
+            <div className="flex gap-2 flex-wrap">
               {CAR_PRESETS.map((preset) => (
                 <button
                   key={preset.label}
                   onClick={() => applyCarPreset(preset)}
-                  className="text-[11px] px-2 py-1 rounded-full border text-muted-foreground transition-colors active:bg-muted/50"
+                  className="text-xs px-3 py-1.5 rounded-full border border-border/50 text-muted-foreground font-medium transition-all active:scale-95 active:bg-muted/50"
                 >
                   {preset.label}
                 </button>
@@ -183,16 +183,16 @@ export function EventForm({
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 min-h-[48px] shadow-sm"
           />
 
           {/* All day toggle */}
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-3 text-sm font-medium px-1 min-h-[40px]">
             <input
               type="checkbox"
               checked={allDay}
               onChange={(e) => setAllDay(e.target.checked)}
-              className="rounded"
+              className="rounded h-4 w-4"
             />
             Toute la journee
           </label>
@@ -205,14 +205,14 @@ export function EventForm({
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
                 placeholder="Debut"
-                className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                className="flex-1 rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 min-h-[48px] shadow-sm"
               />
               <input
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
                 placeholder="Fin"
-                className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                className="flex-1 rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 min-h-[48px] shadow-sm"
               />
             </div>
           )}
@@ -223,22 +223,22 @@ export function EventForm({
             onChange={(e) => setNote(e.target.value)}
             placeholder="Note (optionnel)"
             rows={2}
-            className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+            className="w-full rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 resize-none shadow-sm"
           />
 
           {/* Actions */}
-          <div className="flex gap-2">
+          <div className="flex gap-3 pt-2">
             <button
               onClick={save}
               disabled={!title.trim() || saving}
-              className="flex-1 rounded-lg bg-primary text-primary-foreground py-2.5 text-sm font-medium disabled:opacity-50 transition-colors active:bg-primary/90"
+              className="flex-1 rounded-2xl bg-primary text-primary-foreground py-3.5 text-sm font-semibold disabled:opacity-50 transition-all active:scale-[0.98] min-h-[52px] shadow-sm"
             >
               {saving ? "..." : event ? "Enregistrer" : "Ajouter"}
             </button>
             {event && (
               <button
                 onClick={handleDelete}
-                className="rounded-lg border px-3 py-2.5 text-destructive transition-colors active:bg-destructive/10"
+                className="rounded-2xl border border-destructive/30 text-destructive px-5 py-3.5 text-sm font-semibold transition-all active:scale-[0.98] active:bg-destructive/10 min-h-[52px]"
               >
                 <Trash2 className="h-4 w-4" />
               </button>

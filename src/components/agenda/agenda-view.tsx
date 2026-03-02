@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { format, parseISO, addDays, addWeeks, addMonths, subDays, subWeeks, subMonths, startOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
 import { toDateString } from "@/lib/rotation";
 import { WeekView } from "./week-view";
 import { DayView } from "./day-view";
@@ -125,19 +126,28 @@ export function AgendaView({
   return (
     <div className="space-y-4">
       {/* View toggle */}
-      <div className="flex gap-1">
+      <div className="flex gap-1 rounded-2xl bg-muted/50 p-1">
         {(["day", "week", "month"] as const).map((v) => (
           <button
             key={v}
             onClick={() => changeView(v)}
             className={cn(
-              "text-xs px-2.5 py-1 rounded-full transition-colors",
+              "relative text-xs px-4 py-2 rounded-xl transition-colors min-h-[36px] flex-1 font-medium",
               view === v
-                ? "bg-foreground text-background font-medium"
+                ? "text-foreground"
                 : "text-muted-foreground"
             )}
           >
-            {v === "day" ? "Jour" : v === "week" ? "Semaine" : "Mois"}
+            {view === v && (
+              <motion.div
+                layoutId="agenda-view-pill"
+                className="absolute inset-0 bg-card rounded-xl shadow-sm"
+                transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+              />
+            )}
+            <span className="relative z-10">
+              {v === "day" ? "Jour" : v === "week" ? "Semaine" : "Mois"}
+            </span>
           </button>
         ))}
       </div>
@@ -146,14 +156,14 @@ export function AgendaView({
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate("prev")}
-          className="h-8 w-8 rounded-lg flex items-center justify-center transition-colors active:bg-muted"
+          className="h-10 w-10 rounded-xl flex items-center justify-center transition-all active:scale-90 active:bg-muted"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <span className="text-sm font-medium capitalize">{dateLabel}</span>
+        <span className="text-sm font-semibold capitalize">{dateLabel}</span>
         <button
           onClick={() => navigate("next")}
-          className="h-8 w-8 rounded-lg flex items-center justify-center transition-colors active:bg-muted"
+          className="h-10 w-10 rounded-xl flex items-center justify-center transition-all active:scale-90 active:bg-muted"
         >
           <ChevronRight className="h-4 w-4" />
         </button>

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export function MealsTabs() {
@@ -22,33 +23,43 @@ export function MealsTabs() {
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex gap-1 rounded-lg bg-muted p-1 flex-1">
+      <div className="flex gap-1 rounded-2xl bg-muted/60 p-1 flex-1">
         <button
           onClick={() => setTab("souper")}
           className={cn(
-            "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-            tab !== "dejeuner"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground"
+            "relative flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors min-h-[40px]",
+            tab !== "dejeuner" ? "text-foreground" : "text-muted-foreground"
           )}
         >
-          Souper
+          {tab !== "dejeuner" && (
+            <motion.div
+              layoutId="meals-tab"
+              className="absolute inset-0 bg-card rounded-xl shadow-sm"
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            />
+          )}
+          <span className="relative">Souper</span>
         </button>
         <button
           onClick={() => setTab("dejeuner")}
           className={cn(
-            "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-            tab === "dejeuner"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground"
+            "relative flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors min-h-[40px]",
+            tab === "dejeuner" ? "text-foreground" : "text-muted-foreground"
           )}
         >
-          Dejeuner
+          {tab === "dejeuner" && (
+            <motion.div
+              layoutId="meals-tab"
+              className="absolute inset-0 bg-card rounded-xl shadow-sm"
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            />
+          )}
+          <span className="relative">Dejeuner</span>
         </button>
       </div>
       <Link
         href="/recipes"
-        className="shrink-0 flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        className="shrink-0 flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[40px] active:scale-[0.97]"
       >
         <BookOpen className="h-4 w-4" />
         Recettes

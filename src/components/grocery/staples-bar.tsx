@@ -17,12 +17,12 @@ export function StaplesBar({
 }) {
   return (
     <div className="overflow-x-auto -mx-1 px-1">
-      <div className="flex gap-1.5 pb-1">
+      <div className="flex gap-2 pb-1">
         {staples.map((staple) => (
           <button
             key={staple.id}
             onClick={() => onAdd(staple)}
-            className="shrink-0 text-xs px-2.5 py-1.5 rounded-full border bg-background hover:bg-muted/50 transition-colors active:scale-95"
+            className="shrink-0 text-xs font-medium px-3 py-2 rounded-full border border-border/50 bg-card shadow-sm transition-all active:scale-[0.95] min-h-[36px]"
           >
             + {staple.name}
           </button>

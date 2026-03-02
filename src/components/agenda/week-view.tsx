@@ -52,12 +52,12 @@ export function WeekView({
           <div
             key={dateStr}
             className={cn(
-              "rounded-xl border p-3 transition-colors",
-              isToday && "ring-2 ring-primary/20 bg-primary/[0.02]",
+              "rounded-2xl bg-card shadow-sm border border-border/50 p-3.5 transition-all",
+              isToday && "ring-2 ring-primary/20 bg-primary/[0.03]",
               isPast && "opacity-50"
             )}
           >
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-1.5">
               <span
                 className={cn(
                   "text-sm font-semibold capitalize",
@@ -68,7 +68,7 @@ export function WeekView({
               </span>
               <button
                 onClick={() => onAddEvent(dateStr)}
-                className="h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground transition-colors active:bg-muted"
+                className="h-8 w-8 rounded-xl flex items-center justify-center text-muted-foreground transition-all active:scale-90 active:bg-muted"
               >
                 <Plus className="h-3.5 w-3.5" />
               </button>
@@ -82,11 +82,11 @@ export function WeekView({
                     <button
                       key={event.id}
                       onClick={() => onEditEvent(event)}
-                      className="flex items-center gap-2 w-full text-left rounded-lg px-2 py-1.5 transition-colors active:bg-muted/50"
+                      className="flex items-center gap-2 w-full text-left rounded-xl px-2.5 py-2 transition-all active:scale-[0.98] active:bg-muted/50 min-h-[40px]"
                     >
                       <div className={cn("w-1 h-6 rounded-full shrink-0", CATEGORY_COLORS[event.category] ?? CATEGORY_COLORS.other)} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate">{event.title}</p>
+                        <p className="text-sm truncate font-medium">{event.title}</p>
                         <p className="text-[10px] text-muted-foreground">
                           {event.all_day
                             ? "Journee"

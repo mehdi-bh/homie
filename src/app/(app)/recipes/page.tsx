@@ -24,7 +24,7 @@ export default async function RecipesPage() {
         action={
           <Link
             href="/recipes/new"
-            className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors"
+            className="flex items-center gap-1.5 text-sm text-primary font-semibold transition-all active:scale-95"
           >
             <Plus className="h-4 w-4" />
             Nouvelle

@@ -43,14 +43,14 @@ export function DayView({
             <button
               key={event.id}
               onClick={() => onEditEvent(event)}
-              className="w-full text-left rounded-xl border p-3 transition-colors active:bg-muted/50"
+              className="w-full text-left rounded-2xl bg-card shadow-sm border border-border/50 p-4 transition-all active:scale-[0.98] min-h-[64px]"
             >
               <div className="flex items-start gap-3">
                 <div className={cn("w-1.5 rounded-full shrink-0 self-stretch min-h-[40px]", CATEGORY_COLORS[event.category] ?? CATEGORY_COLORS.other)} />
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium truncate">{event.title}</p>
-                    <span className="text-[10px] text-muted-foreground shrink-0">
+                    <p className="text-sm font-semibold truncate">{event.title}</p>
+                    <span className="text-[10px] font-medium text-muted-foreground shrink-0 bg-muted px-2 py-0.5 rounded-full">
                       {CATEGORY_LABELS[event.category] ?? event.category}
                     </span>
                   </div>
@@ -84,7 +84,7 @@ export function DayView({
 
       <button
         onClick={onAddEvent}
-        className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed p-3 text-sm text-muted-foreground transition-colors active:bg-muted/50"
+        className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border p-4 text-sm text-muted-foreground font-medium transition-all active:scale-[0.98] active:bg-muted/50 min-h-[52px]"
       >
         <Plus className="h-4 w-4" />
         Ajouter un evenement

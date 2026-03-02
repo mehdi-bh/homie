@@ -103,7 +103,7 @@ export function ChoreManager({
       <div className="space-y-3">
         {choreDefs.length === 0 && (
           <p className="text-sm text-muted-foreground py-8 text-center">
-            Aucune tâche configurée. Ajoutez-en une !
+            Aucune tache configuree. Ajoutez-en une !
           </p>
         )}
 
@@ -111,16 +111,16 @@ export function ChoreManager({
           <div
             key={chore.id}
             className={cn(
-              "flex items-center gap-3 rounded-xl border p-4 transition-colors",
+              "flex items-center gap-3 rounded-2xl bg-card shadow-sm border border-border/50 p-4 transition-all min-h-[64px]",
               deleting === chore.id && "opacity-50"
             )}
           >
             <span className="text-2xl shrink-0">{chore.icon}</span>
 
             <div className="flex-1 min-w-0">
-              <p className="font-medium">{chore.name}</p>
+              <p className="font-semibold">{chore.name}</p>
               <div className="flex items-center gap-2 mt-1">
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-[10px] rounded-full">
                   {getFrequencyLabel(chore)}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
@@ -139,7 +139,7 @@ export function ChoreManager({
 
             <button
               onClick={() => handleEdit(chore)}
-              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground active:text-foreground active:bg-muted transition-all active:scale-90"
             >
               <Pencil className="h-4 w-4" />
             </button>
@@ -147,7 +147,7 @@ export function ChoreManager({
             <button
               onClick={() => handleDelete(chore.id)}
               disabled={deleting === chore.id}
-              className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+              className="h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground/20 active:text-destructive transition-all active:scale-90"
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -155,10 +155,13 @@ export function ChoreManager({
         ))}
       </div>
 
-      <Button onClick={handleAdd} className="w-full" variant="outline">
+      <button
+        onClick={handleAdd}
+        className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border py-3.5 text-sm font-semibold text-muted-foreground transition-all active:scale-[0.98] active:bg-muted/50 min-h-[52px]"
+      >
         <Plus className="h-4 w-4" />
-        Ajouter une tâche
-      </Button>
+        Ajouter une tache
+      </button>
 
       <ChoreFormSheet
         open={sheetOpen}

@@ -48,11 +48,11 @@ export function MonthView({
   }
 
   return (
-    <div>
+    <div className="rounded-2xl bg-card shadow-sm border border-border/50 p-3">
       {/* Day headers */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
+      <div className="grid grid-cols-7 gap-1 mb-2">
         {DAY_HEADERS.map((d, i) => (
-          <span key={i} className="text-[10px] text-center text-muted-foreground font-medium">
+          <span key={i} className="text-[10px] text-center text-muted-foreground font-semibold uppercase">
             {d}
           </span>
         ))}
@@ -65,7 +65,6 @@ export function MonthView({
           const isToday = dateStr === todayStr;
           const inMonth = isSameMonth(day, baseDate);
           const dayEvents = eventsByDate.get(dateStr) ?? [];
-          // Unique categories for dots
           const categories = [...new Set(dayEvents.map((e) => e.category))];
 
           return (
@@ -73,27 +72,27 @@ export function MonthView({
               key={dateStr}
               onClick={() => onDayClick(dateStr)}
               className={cn(
-                "flex flex-col items-center justify-start rounded-lg py-1.5 min-h-[44px] transition-colors active:bg-muted/50",
-                !inMonth && "opacity-30"
+                "flex flex-col items-center justify-start rounded-xl py-2 min-h-[48px] transition-all active:scale-95 active:bg-muted/50",
+                !inMonth && "opacity-25"
               )}
             >
               <span
                 className={cn(
-                  "text-xs leading-none",
+                  "text-xs leading-none font-medium",
                   isToday
-                    ? "bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center font-medium"
+                    ? "bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center font-semibold"
                     : "text-foreground"
                 )}
               >
                 {format(day, "d")}
               </span>
               {categories.length > 0 && (
-                <div className="flex gap-0.5 mt-1">
+                <div className="flex gap-0.5 mt-1.5">
                   {categories.slice(0, 3).map((cat) => (
                     <div
                       key={cat}
                       className={cn(
-                        "h-1 w-1 rounded-full",
+                        "h-1.5 w-1.5 rounded-full",
                         CATEGORY_DOT_COLORS[cat] ?? CATEGORY_DOT_COLORS.other
                       )}
                     />

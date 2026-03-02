@@ -5,6 +5,7 @@ import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn } from "@/lib/utils";
 
@@ -39,44 +40,54 @@ export function MiniWeekPreview({
   if (!week || week.length === 0) return null;
 
   return (
-    <div className="rounded-xl border p-3">
-      <div className="flex items-center justify-between mb-2.5">
+    <div className="rounded-2xl bg-card shadow-sm border border-border/50 p-4">
+      <div className="flex items-center justify-between mb-3">
         {hasToggle ? (
-          <div className="flex gap-1">
+          <div className="flex gap-1 bg-muted/60 rounded-xl p-0.5">
             <button
               onClick={() => setShowNext(false)}
               className={cn(
-                "text-xs px-2 py-0.5 rounded-full transition-colors",
-                !showNext
-                  ? "bg-foreground text-background font-medium"
-                  : "text-muted-foreground"
+                "relative text-xs px-2.5 py-1 rounded-lg transition-colors",
+                !showNext ? "text-foreground" : "text-muted-foreground"
               )}
             >
-              Cette semaine
+              {!showNext && (
+                <motion.div
+                  layoutId="mini-week-toggle"
+                  className="absolute inset-0 bg-card rounded-lg shadow-sm"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+              <span className="relative font-medium">Cette semaine</span>
             </button>
             <button
               onClick={() => setShowNext(true)}
               className={cn(
-                "text-xs px-2 py-0.5 rounded-full transition-colors",
-                showNext
-                  ? "bg-foreground text-background font-medium"
-                  : "text-muted-foreground"
+                "relative text-xs px-2.5 py-1 rounded-lg transition-colors",
+                showNext ? "text-foreground" : "text-muted-foreground"
               )}
             >
-              Prochaine
+              {showNext && (
+                <motion.div
+                  layoutId="mini-week-toggle"
+                  className="absolute inset-0 bg-card rounded-lg shadow-sm"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+              <span className="relative font-medium">Prochaine</span>
             </button>
           </div>
         ) : (
-          <p className="text-xs font-medium text-muted-foreground">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             {showNext ? "Semaine prochaine" : "Cette semaine"}
           </p>
         )}
         <Link href={`/week${showNext ? "?week=next" : ""}`}>
-          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+          <ArrowRight className="h-4 w-4 text-muted-foreground" />
         </Link>
       </div>
 
-      <div className="grid grid-cols-[auto_repeat(7,1fr)] gap-x-1 items-center">
+      <div className="grid grid-cols-[auto_repeat(7,1fr)] gap-x-1.5 items-center">
         <div />
         {week.map((day) => {
           const isToday = !showNext && day.date === todayStr;
@@ -86,8 +97,8 @@ export function MiniWeekPreview({
             <span
               key={day.date}
               className={cn(
-                "text-[10px] uppercase text-center",
-                isToday ? "text-primary font-semibold" : "text-muted-foreground"
+                "text-[10px] uppercase text-center font-semibold",
+                isToday ? "text-primary" : "text-muted-foreground"
               )}
             >
               {dayLetter}
@@ -96,7 +107,7 @@ export function MiniWeekPreview({
         })}
 
         {/* Lunch row */}
-        <span className="text-[10px] text-muted-foreground pr-1.5">Dej.</span>
+        <span className="text-[10px] text-muted-foreground pr-2 font-medium">Dej.</span>
         {week.map((day) => {
           const isToday = !showNext && day.date === todayStr;
           const isPast = !showNext && day.date < todayStr;
@@ -104,9 +115,9 @@ export function MiniWeekPreview({
             <div
               key={day.date + "-l"}
               className={cn(
-                "flex justify-center py-0.5 rounded-t-md",
-                isToday && "bg-primary/10",
-                isPast && "opacity-40"
+                "flex justify-center py-1 rounded-t-lg",
+                isToday && "bg-primary/8",
+                isPast && "opacity-35"
               )}
             >
               {day.lunchCook ? (
@@ -114,17 +125,17 @@ export function MiniWeekPreview({
                   src={day.lunchCook.avatar_url}
                   fallback={day.lunchCook.avatar_emoji}
                   size="sm"
-                  className="h-5 w-5 text-sm"
+                  className="h-6 w-6 text-sm"
                 />
               ) : (
-                <span className="text-sm leading-none">&middot;</span>
+                <span className="text-sm leading-none text-muted-foreground/40">&middot;</span>
               )}
             </div>
           );
         })}
 
         {/* Dinner row */}
-        <span className="text-[10px] text-muted-foreground pr-1.5">Souper</span>
+        <span className="text-[10px] text-muted-foreground pr-2 font-medium">Souper</span>
         {week.map((day) => {
           const isToday = !showNext && day.date === todayStr;
           const isPast = !showNext && day.date < todayStr;
@@ -133,9 +144,9 @@ export function MiniWeekPreview({
             <div
               key={day.date + "-d"}
               className={cn(
-                "flex justify-center py-0.5 rounded-b-md",
-                isToday && "bg-primary/10",
-                isPast && "opacity-40"
+                "flex justify-center py-1 rounded-b-lg",
+                isToday && "bg-primary/8",
+                isPast && "opacity-35"
               )}
             >
               {day.dinnerCook ? (
@@ -143,10 +154,10 @@ export function MiniWeekPreview({
                   src={day.dinnerCook.avatar_url}
                   fallback={day.dinnerCook.avatar_emoji}
                   size="sm"
-                  className={cn("h-5 w-5 text-sm", isSkipped && "opacity-30")}
+                  className={cn("h-6 w-6 text-sm", isSkipped && "opacity-30")}
                 />
               ) : (
-                <span className="text-sm leading-none">&middot;</span>
+                <span className="text-sm leading-none text-muted-foreground/40">&middot;</span>
               )}
             </div>
           );

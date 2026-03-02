@@ -13,11 +13,11 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 const COLORS = [
-  "#4f46e5", // indigo
-  "#ec4899", // pink
+  "#c4623a", // terracotta
+  "#ec4899", // rose
   "#10b981", // emerald
   "#f59e0b", // amber
-  "#ef4444", // red
+  "#ef4444", // rouge
   "#8b5cf6", // violet
   "#06b6d4", // cyan
 ];
@@ -108,23 +108,23 @@ export default function SettingsPage() {
   if (!profile) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Settings" />
+        <PageHeader title="Parametres" />
         <div className="space-y-4">
           <div className="space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-4 w-24 rounded-lg" />
+            <Skeleton className="h-12 w-full rounded-2xl" />
           </div>
           <div className="space-y-2">
-            <Skeleton className="h-4 w-16" />
-            <div className="flex gap-2">
+            <Skeleton className="h-4 w-16 rounded-lg" />
+            <div className="flex gap-2.5">
               {Array.from({ length: 7 }).map((_, i) => (
-                <Skeleton key={i} className="h-8 w-8 rounded-full" />
+                <Skeleton key={i} className="h-9 w-9 rounded-full" />
               ))}
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-14 w-14 rounded-full" />
+            <Skeleton className="h-4 w-24 rounded-lg" />
           </div>
         </div>
       </div>
@@ -137,27 +137,27 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" />
+      <PageHeader title="Parametres" />
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="name">Display name</Label>
-          <Input
-            id="name"
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nom affiche</label>
+          <input
             value={profile.display_name}
             onChange={(e) => update("display_name", e.target.value)}
+            className="w-full rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 min-h-[48px] shadow-sm"
           />
         </div>
 
         <div className="space-y-2">
-          <Label>Color</Label>
-          <div className="flex gap-2">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Couleur</label>
+          <div className="flex gap-2.5">
             {COLORS.map((c) => (
               <button
                 key={c}
                 type="button"
                 className={cn(
-                  "h-8 w-8 rounded-full transition-all",
+                  "h-9 w-9 rounded-full transition-all active:scale-90",
                   profile.color === c ? "ring-2 ring-offset-2 ring-foreground scale-110" : ""
                 )}
                 style={{ backgroundColor: c }}
@@ -168,21 +168,21 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-2">
-          <Label>Photo</Label>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Photo</label>
           <div className="flex items-center gap-4">
             <UserAvatar
               src={profile.avatar_url}
               fallback={profile.avatar_emoji}
               size="lg"
             />
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="text-sm font-medium text-primary hover:underline disabled:opacity-50"
+                className="text-sm font-semibold text-primary disabled:opacity-50 transition-all active:scale-95"
               >
-                {uploading ? "Uploading..." : profile.avatar_url ? "Change photo" : "Upload photo"}
+                {uploading ? "Envoi..." : profile.avatar_url ? "Changer la photo" : "Ajouter une photo"}
               </button>
               {profile.avatar_url && (
                 <button
@@ -197,9 +197,9 @@ export default function SettingsPage() {
                       .eq("id", userId);
                     setProfile((p) => (p ? { ...p, avatar_url: null } : p));
                   }}
-                  className="block text-xs text-muted-foreground hover:text-destructive"
+                  className="block text-xs text-muted-foreground active:text-destructive transition-colors"
                 >
-                  Remove photo
+                  Supprimer la photo
                 </button>
               )}
             </div>
@@ -214,17 +214,17 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-2">
-          <Label>Avatar emoji (fallback)</Label>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Emoji (avatar par defaut)</label>
           <div className="flex gap-2 flex-wrap">
             {AVATARS.map((a) => (
               <button
                 key={a}
                 type="button"
                 className={cn(
-                  "h-10 w-10 rounded-lg text-xl flex items-center justify-center transition-all",
+                  "h-11 w-11 rounded-xl text-xl flex items-center justify-center transition-all active:scale-90",
                   profile.avatar_emoji === a
                     ? "bg-primary/10 ring-2 ring-primary scale-110"
-                    : "bg-muted hover:bg-muted/80"
+                    : "bg-muted/50"
                 )}
                 onClick={() => update("avatar_emoji", a)}
               >
@@ -235,12 +235,12 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="lunch">Default lunch</Label>
-          <Input
-            id="lunch"
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dejeuner par defaut</label>
+          <input
             value={profile.default_lunch || ""}
             onChange={(e) => update("default_lunch", e.target.value)}
-            placeholder="e.g. Riz + poulet"
+            placeholder="Ex: Riz + poulet"
+            className="w-full rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 min-h-[48px] shadow-sm"
           />
         </div>
       </div>
@@ -248,10 +248,10 @@ export default function SettingsPage() {
       <Separator />
 
       <div className="space-y-4">
-        <Label className="text-base font-semibold">Notifications</Label>
+        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Notifications</label>
 
-        <div className="flex items-center justify-between">
-          <Label htmlFor="notify-daily" className="font-normal">Daily reminders</Label>
+        <div className="flex items-center justify-between min-h-[44px]">
+          <Label htmlFor="notify-daily" className="font-medium text-sm">Rappels quotidiens</Label>
           <Switch
             id="notify-daily"
             checked={profile.notify_daily}
@@ -259,8 +259,8 @@ export default function SettingsPage() {
           />
         </div>
 
-        <div className="flex items-center justify-between">
-          <Label htmlFor="notify-deadline" className="font-normal">Deadline alerts</Label>
+        <div className="flex items-center justify-between min-h-[44px]">
+          <Label htmlFor="notify-deadline" className="font-medium text-sm">Alertes delais</Label>
           <Switch
             id="notify-deadline"
             checked={profile.notify_deadline}
@@ -268,8 +268,8 @@ export default function SettingsPage() {
           />
         </div>
 
-        <div className="flex items-center justify-between">
-          <Label htmlFor="notify-grocery" className="font-normal">Grocery updates</Label>
+        <div className="flex items-center justify-between min-h-[44px]">
+          <Label htmlFor="notify-grocery" className="font-medium text-sm">Mises a jour courses</Label>
           <Switch
             id="notify-grocery"
             checked={profile.notify_grocery}
@@ -277,8 +277,8 @@ export default function SettingsPage() {
           />
         </div>
 
-        <div className="flex items-center justify-between">
-          <Label htmlFor="notify-chores" className="font-normal">Chore reminders</Label>
+        <div className="flex items-center justify-between min-h-[44px]">
+          <Label htmlFor="notify-chores" className="font-medium text-sm">Rappels taches menageres</Label>
           <Switch
             id="notify-chores"
             checked={profile.notify_chores}
@@ -287,9 +287,13 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <Button onClick={handleSave} className="w-full" disabled={saving}>
-        {saved ? "Saved!" : saving ? "Saving..." : "Save"}
-      </Button>
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="w-full rounded-2xl bg-primary text-primary-foreground py-3.5 text-sm font-semibold disabled:opacity-50 transition-all active:scale-[0.98] min-h-[52px] shadow-sm"
+      >
+        {saved ? "Enregistre !" : saving ? "Enregistrement..." : "Enregistrer"}
+      </button>
     </div>
   );
 }

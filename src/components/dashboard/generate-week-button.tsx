@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Plus, Loader2 } from "lucide-react";
 
 export function GenerateWeekButton({
   label,
@@ -29,19 +28,19 @@ export function GenerateWeekButton({
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage(data.error || "Something went wrong");
+        setMessage(data.error || "Erreur");
         return;
       }
 
       if (data.alreadyGenerated) {
-        setMessage("Already generated");
+        setMessage("Deja generee");
       } else {
-        setMessage("Week generated!");
+        setMessage("Semaine generee !");
       }
 
       router.refresh();
     } catch {
-      setMessage("Network error");
+      setMessage("Erreur reseau");
     } finally {
       setLoading(false);
     }
@@ -49,19 +48,18 @@ export function GenerateWeekButton({
 
   return (
     <div className="space-y-2">
-      <Button
+      <button
         onClick={handleGenerate}
         disabled={loading}
-        className="w-full"
-        variant="outline"
+        className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/20 bg-primary/4 px-4 py-4 text-sm font-semibold text-primary transition-all active:scale-[0.98] disabled:opacity-50 min-h-[52px]"
       >
         {loading ? (
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           <Plus className="h-4 w-4" />
         )}
         {label}
-      </Button>
+      </button>
       {message && (
         <p className="text-xs text-muted-foreground text-center">{message}</p>
       )}

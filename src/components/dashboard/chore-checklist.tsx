@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { format, parseISO, isToday, isTomorrow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +50,7 @@ export function ChoreChecklist({ chores }: { chores: Chore[] }) {
   if (items.length === 0) return null;
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       {items.map((chore) => {
         const isDone = chore.status === "done";
         const due = dueLabel(chore.due_date);
@@ -58,25 +59,35 @@ export function ChoreChecklist({ chores }: { chores: Chore[] }) {
             key={chore.id}
             onClick={() => toggle(chore)}
             disabled={loading === chore.id}
-            className="flex items-center gap-3 w-full px-1 py-1.5 rounded-lg transition-colors active:bg-muted/50 text-left"
+            className="flex items-center gap-3 w-full px-3 py-3 rounded-2xl transition-all active:scale-[0.98] bg-card border border-border/50 shadow-sm text-left min-h-[48px]"
           >
-            <div
+            <motion.div
+              animate={{ scale: isDone ? 1 : 1 }}
               className={cn(
-                "h-5 w-5 rounded border-2 shrink-0 flex items-center justify-center transition-colors",
+                "h-6 w-6 rounded-lg shrink-0 flex items-center justify-center transition-colors",
                 isDone
-                  ? "bg-green-500 border-green-500"
-                  : "border-muted-foreground/30"
+                  ? "bg-emerald-500"
+                  : "border-2 border-muted-foreground/25"
               )}
             >
-              {isDone && (
-                <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none">
-                  <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </div>
+              <AnimatePresence>
+                {isDone && (
+                  <motion.svg
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="h-3.5 w-3.5 text-white"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                  >
+                    <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </motion.svg>
+                )}
+              </AnimatePresence>
+            </motion.div>
             <span
               className={cn(
-                "text-sm capitalize flex-1",
+                "text-sm capitalize flex-1 font-medium",
                 isDone && "line-through text-muted-foreground"
               )}
             >

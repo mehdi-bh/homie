@@ -122,7 +122,6 @@ export function RecipeForm({
           .update({ name: name.trim(), notes: notes.trim() || null, tags })
           .eq("id", initial.id);
 
-        // Delete old ingredients and insert new
         await supabase
           .from("recipe_ingredients")
           .delete()
@@ -183,10 +182,10 @@ export function RecipeForm({
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <Link
           href="/recipes"
-          className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
+          className="h-10 w-10 rounded-xl flex items-center justify-center bg-muted/50 transition-all active:scale-[0.95]"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
@@ -197,8 +196,8 @@ export function RecipeForm({
 
       {/* AI Chat */}
       {!isEdit && (
-        <div className="rounded-xl border-2 border-dashed border-muted-foreground/20 p-4 space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+        <div className="rounded-2xl border-2 border-dashed border-primary/15 bg-primary/3 p-4 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-semibold text-primary">
             <Sparkles className="h-4 w-4" />
             Generation rapide
           </div>
@@ -208,7 +207,7 @@ export function RecipeForm({
               {chatMessages.map((msg, i) => (
                 <p
                   key={i}
-                  className={`text-xs px-3 py-1.5 rounded-lg w-fit max-w-[85%] ${
+                  className={`text-xs px-3 py-2 rounded-2xl w-fit max-w-[85%] ${
                     msg.role === "user"
                       ? "bg-primary/10 text-foreground ml-auto"
                       : "bg-muted text-muted-foreground"
@@ -246,12 +245,12 @@ export function RecipeForm({
                   ? "Decris ta recette: Pasta pesto poulet..."
                   : "Modifier: enleve la creme, ajoute des champignons..."
               }
-              className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              className="flex-1 rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 min-h-[48px] shadow-sm"
             />
             <button
               onClick={sendChat}
               disabled={generating || !chatInput.trim()}
-              className="shrink-0 rounded-lg bg-primary text-primary-foreground px-3 py-2 disabled:opacity-50 transition-colors active:bg-primary/90"
+              className="shrink-0 rounded-2xl bg-primary text-primary-foreground px-4 py-3 disabled:opacity-50 transition-all active:scale-[0.95] min-h-[48px]"
             >
               <Send className="h-4 w-4" />
             </button>
@@ -260,50 +259,50 @@ export function RecipeForm({
       )}
 
       {/* Name */}
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-muted-foreground">Nom</label>
+      <div className="space-y-2">
+        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nom</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Ex: Poulet roti"
-          className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+          className="w-full rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 min-h-[48px] shadow-sm"
         />
       </div>
 
       {/* Notes */}
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-muted-foreground">Notes</label>
+      <div className="space-y-2">
+        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Notes</label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Instructions, astuces..."
           rows={3}
-          className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+          className="w-full rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 resize-none shadow-sm"
         />
       </div>
 
       {/* Tags */}
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-muted-foreground">
+      <div className="space-y-2">
+        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Tags (separes par des virgules)
         </label>
         <input
           value={tagsInput}
           onChange={(e) => setTagsInput(e.target.value)}
           placeholder="rapide, vegetarien, ete"
-          className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+          className="w-full rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 min-h-[48px] shadow-sm"
         />
       </div>
 
       {/* Ingredients */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-medium text-muted-foreground">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Ingredients
           </label>
           <button
             onClick={addIngredient}
-            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+            className="flex items-center gap-1 text-xs text-primary font-semibold transition-colors"
           >
             <Plus className="h-3 w-3" />
             Ajouter
@@ -317,19 +316,19 @@ export function RecipeForm({
         )}
 
         {ingredients.map((ing, i) => (
-          <div key={i} className="rounded-lg border p-3 space-y-2">
+          <div key={i} className="rounded-2xl bg-card shadow-sm border border-border/50 p-3.5 space-y-2.5">
             <div className="flex items-center gap-2">
               <input
                 value={ing.name}
                 onChange={(e) => updateIngredient(i, { name: e.target.value })}
                 placeholder="Nom de l'ingredient"
-                className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-primary/20"
+                className="flex-1 rounded-xl border bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-primary/20 min-h-[40px]"
               />
               <button
                 onClick={() => removeIngredient(i)}
-                className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                className="h-9 w-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all active:scale-90"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
 
@@ -340,14 +339,14 @@ export function RecipeForm({
                 onChange={(e) =>
                   updateIngredient(i, { quantity: parseFloat(e.target.value) || 0 })
                 }
-                className="w-16 rounded-md border bg-background px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-primary/20"
+                className="w-16 rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary/20 min-h-[36px]"
                 step="any"
                 min="0"
               />
               <select
                 value={ing.unit}
                 onChange={(e) => updateIngredient(i, { unit: e.target.value })}
-                className="rounded-md border bg-background px-2 py-1.5 text-sm outline-none"
+                className="rounded-xl border bg-background px-3 py-2 text-sm outline-none min-h-[36px]"
               >
                 {UNITS.map((u) => (
                   <option key={u} value={u}>
@@ -362,10 +361,10 @@ export function RecipeForm({
                       ing.scaling_type === "per_person" ? "fixed" : "per_person",
                   })
                 }
-                className={`text-[10px] px-2 py-1 rounded-full border transition-colors ${
+                className={`text-[10px] font-medium px-2.5 py-1.5 rounded-full border transition-all active:scale-95 ${
                   ing.scaling_type === "per_person"
                     ? "bg-primary/10 text-primary border-primary/20"
-                    : "bg-muted text-muted-foreground"
+                    : "bg-muted text-muted-foreground border-border"
                 }`}
               >
                 {ing.scaling_type === "per_person" ? "/pers." : "fixe"}
@@ -375,7 +374,7 @@ export function RecipeForm({
             <select
               value={ing.category}
               onChange={(e) => updateIngredient(i, { category: e.target.value })}
-              className="w-full rounded-md border bg-background px-2 py-1.5 text-sm outline-none"
+              className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none min-h-[36px]"
             >
               {CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>
@@ -388,11 +387,11 @@ export function RecipeForm({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 pt-2">
+      <div className="flex gap-3 pt-2">
         <button
           onClick={handleSave}
           disabled={saving || !name.trim()}
-          className="flex-1 rounded-lg bg-primary text-primary-foreground py-2.5 text-sm font-medium disabled:opacity-50 transition-colors active:bg-primary/90"
+          className="flex-1 rounded-2xl bg-primary text-primary-foreground py-3.5 text-sm font-semibold disabled:opacity-50 transition-all active:scale-[0.98] min-h-[52px] shadow-sm"
         >
           {saving ? "Enregistrement..." : isEdit ? "Enregistrer" : "Creer"}
         </button>
@@ -400,7 +399,7 @@ export function RecipeForm({
           <button
             onClick={handleDelete}
             disabled={saving}
-            className="rounded-lg border border-destructive/30 text-destructive px-4 py-2.5 text-sm font-medium disabled:opacity-50 transition-colors active:bg-destructive/10"
+            className="rounded-2xl border border-destructive/30 text-destructive px-5 py-3.5 text-sm font-semibold disabled:opacity-50 transition-all active:scale-[0.98] active:bg-destructive/10 min-h-[52px]"
           >
             Supprimer
           </button>

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Plus, Trash2, AlertTriangle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn } from "@/lib/utils";
@@ -47,10 +48,9 @@ export function TodoList({
   const pending = todos.filter((t) => !t.completed);
   const completed = todos.filter((t) => t.completed);
 
-  // Sort: high priority first, then by created_at desc
   pending.sort((a, b) => {
     if (a.priority !== b.priority) return b.priority - a.priority;
-    return 0; // already sorted by created_at desc from server
+    return 0;
   });
 
   async function addTodo(title: string) {
@@ -116,35 +116,35 @@ export function TodoList({
             if (e.key === "Enter") addTodo(quickAdd);
           }}
           placeholder="Ajouter une tache..."
-          className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+          className="flex-1 rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 min-h-[48px] shadow-sm"
         />
         <button
           onClick={() => addTodo(quickAdd)}
           disabled={!quickAdd.trim()}
-          className="rounded-lg bg-primary text-primary-foreground px-3 py-2 disabled:opacity-50 transition-colors active:bg-primary/90"
+          className="rounded-2xl bg-primary text-primary-foreground px-4 py-3 disabled:opacity-50 transition-all active:scale-[0.95] min-h-[48px] shadow-sm"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-5 w-5" />
         </button>
       </div>
 
       {/* Pending items */}
       {pending.length > 0 && (
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           {pending.map((todo) => {
             const creator = profileMap.get(todo.created_by);
             return (
               <div
                 key={todo.id}
-                className="flex items-center gap-2 py-2 px-1"
+                className="flex items-center gap-3 py-2.5 px-2 min-h-[48px]"
               >
                 <button
                   onClick={() => toggleTodo(todo.id)}
-                  className="shrink-0 h-5 w-5 rounded border-2 border-muted-foreground/30 flex items-center justify-center transition-colors"
+                  className="shrink-0 h-6 w-6 rounded-lg border-2 border-muted-foreground/25 flex items-center justify-center transition-all active:scale-90"
                 />
                 {todo.priority === 1 && (
-                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
                 )}
-                <span className="text-sm flex-1 min-w-0 truncate">{todo.title}</span>
+                <span className="text-sm flex-1 min-w-0 truncate font-medium">{todo.title}</span>
                 {creator && (
                   <UserAvatar
                     src={creator.avatar_url}
@@ -156,19 +156,19 @@ export function TodoList({
                 <button
                   onClick={() => togglePriority(todo.id)}
                   className={cn(
-                    "shrink-0 h-8 w-8 rounded flex items-center justify-center transition-colors",
+                    "shrink-0 h-10 w-10 rounded-xl flex items-center justify-center transition-all active:scale-90",
                     todo.priority === 1
                       ? "text-amber-500"
-                      : "text-muted-foreground/30 active:text-amber-500"
+                      : "text-muted-foreground/20 active:text-amber-500"
                   )}
                 >
-                  <AlertTriangle className="h-3.5 w-3.5" />
+                  <AlertTriangle className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => deleteTodo(todo.id)}
-                  className="shrink-0 h-8 w-8 rounded flex items-center justify-center text-muted-foreground/30 active:text-destructive transition-colors"
+                  className="shrink-0 h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground/20 active:text-destructive transition-all active:scale-90"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             );
@@ -186,20 +186,20 @@ export function TodoList({
       {/* Completed items */}
       {completed.length > 0 && (
         <div>
-          <p className="text-xs font-medium text-muted-foreground mb-1">
+          <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
             Terminees ({completed.length})
           </p>
-          <div className="space-y-0.5 opacity-50">
+          <div className="space-y-0.5 opacity-45">
             {completed.map((todo) => {
               const creator = profileMap.get(todo.created_by);
               return (
                 <div
                   key={todo.id}
-                  className="flex items-center gap-2 py-1.5 px-1"
+                  className="flex items-center gap-3 py-2 px-2 min-h-[40px]"
                 >
                   <button
                     onClick={() => toggleTodo(todo.id)}
-                    className="shrink-0 h-5 w-5 rounded border-2 bg-green-500 border-green-500 flex items-center justify-center transition-colors"
+                    className="shrink-0 h-5 w-5 rounded-md border-2 bg-emerald-500 border-emerald-500 flex items-center justify-center transition-all active:scale-90"
                   >
                     <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none">
                       <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -218,9 +218,9 @@ export function TodoList({
                   )}
                   <button
                     onClick={() => deleteTodo(todo.id)}
-                    className="shrink-0 h-8 w-8 rounded flex items-center justify-center text-muted-foreground/30 active:text-destructive transition-colors"
+                    className="shrink-0 h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground/20 active:text-destructive transition-all active:scale-90"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               );

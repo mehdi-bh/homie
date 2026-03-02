@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Plus, Trash2, AlertTriangle, ShoppingCart, Check, Pencil } from "lucide-react";
+import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { StaplesBar } from "./staples-bar";
@@ -232,21 +233,21 @@ export function GroceryList({
       <div
         key={item.id}
         className={cn(
-          "flex items-center gap-2 py-2.5 px-2",
-          item.checked && "opacity-40"
+          "flex items-center gap-2.5 py-3 px-2",
+          item.checked && "opacity-35"
         )}
       >
         <button
           onClick={() => toggleChecked(item.id)}
           className={cn(
-            "shrink-0 rounded-md border-2 flex items-center justify-center transition-colors",
-            shoppingMode ? "h-8 w-8" : "h-7 w-7",
+            "shrink-0 rounded-lg border-2 flex items-center justify-center transition-all active:scale-90",
+            shoppingMode ? "h-9 w-9" : "h-8 w-8",
             item.checked
               ? "bg-primary border-primary text-primary-foreground"
-              : "border-muted-foreground/30"
+              : "border-muted-foreground/25"
           )}
         >
-          {item.checked && <Check className={shoppingMode ? "h-5 w-5" : "h-3.5 w-3.5"} />}
+          {item.checked && <Check className={shoppingMode ? "h-5 w-5" : "h-4 w-4"} />}
         </button>
 
         <div className="flex-1 min-w-0">
@@ -258,7 +259,7 @@ export function GroceryList({
                 onChange={(e) => setEditName(e.target.value)}
                 onBlur={handleEditBlur}
                 onKeyDown={handleEditKeyDown}
-                className="flex-1 min-w-0 bg-transparent text-sm outline-none border-b border-primary pb-0.5"
+                className="flex-1 min-w-0 bg-transparent text-sm outline-none border-b-2 border-primary pb-0.5"
                 placeholder="Nom"
               />
               <input
@@ -266,7 +267,7 @@ export function GroceryList({
                 onChange={(e) => setEditQty(e.target.value)}
                 onBlur={handleEditBlur}
                 onKeyDown={handleEditKeyDown}
-                className="w-12 bg-transparent text-sm outline-none border-b border-primary pb-0.5 text-center"
+                className="w-12 bg-transparent text-sm outline-none border-b-2 border-primary pb-0.5 text-center"
                 placeholder="Qte"
                 inputMode="decimal"
               />
@@ -275,7 +276,7 @@ export function GroceryList({
                 onChange={(e) => setEditUnit(e.target.value)}
                 onBlur={handleEditBlur}
                 onKeyDown={handleEditKeyDown}
-                className="w-10 bg-transparent text-sm outline-none border-b border-primary pb-0.5 text-center"
+                className="w-10 bg-transparent text-sm outline-none border-b-2 border-primary pb-0.5 text-center"
                 placeholder="u."
               />
             </div>
@@ -283,20 +284,20 @@ export function GroceryList({
             <div onClick={() => startEditing(item)} className="cursor-text">
               <p
                 className={cn(
-                  "text-sm",
+                  "text-sm font-medium",
                   item.checked && "line-through text-muted-foreground"
                 )}
               >
                 {item.name}
                 {item.quantity != null && (
-                  <span className="text-muted-foreground ml-1">
+                  <span className="text-muted-foreground font-normal ml-1">
                     ({item.quantity}
                     {item.unit ? ` ${item.unit}` : ""})
                   </span>
                 )}
               </p>
               {showSource && item.source_label && (
-                <p className="text-[10px] text-muted-foreground truncate">
+                <p className="text-[10px] text-muted-foreground truncate mt-0.5">
                   {item.source_label}
                 </p>
               )}
@@ -307,19 +308,19 @@ export function GroceryList({
         <button
           onClick={() => toggleUrgent(item.id)}
           className={cn(
-            "shrink-0 h-10 w-10 rounded flex items-center justify-center transition-colors",
+            "shrink-0 h-10 w-10 rounded-xl flex items-center justify-center transition-all active:scale-90",
             item.priority === "urgent"
               ? "text-amber-500"
-              : "text-muted-foreground/30 active:text-amber-500"
+              : "text-muted-foreground/20 active:text-amber-500"
           )}
         >
-          <AlertTriangle className="h-4.5 w-4.5" />
+          <AlertTriangle className="h-4 w-4" />
         </button>
         <button
           onClick={() => deleteItem(item.id)}
-          className="shrink-0 h-10 w-10 rounded flex items-center justify-center text-muted-foreground/30 active:text-destructive transition-colors"
+          className="shrink-0 h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground/20 active:text-destructive transition-all active:scale-90"
         >
-          <Trash2 className="h-4.5 w-4.5" />
+          <Trash2 className="h-4 w-4" />
         </button>
       </div>
     );
@@ -339,12 +340,12 @@ export function GroceryList({
     return (
       <>
         {urgentItems.length > 0 && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900 dark:bg-amber-950/20">
-            <p className="text-xs font-medium text-amber-600 mb-1 flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3" />
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-3.5 dark:border-amber-900 dark:bg-amber-950/20">
+            <p className="text-xs font-semibold text-amber-600 mb-1.5 flex items-center gap-1.5">
+              <AlertTriangle className="h-3.5 w-3.5" />
               Urgent
             </p>
-            <div className="divide-y">
+            <div className="divide-y divide-border/50">
               {urgentItems.map((item) => renderItem(item, true))}
             </div>
           </div>
@@ -352,10 +353,10 @@ export function GroceryList({
 
         {Array.from(grouped.entries()).map(([category, catItems]) => (
           <div key={category}>
-            <p className="text-xs font-medium text-muted-foreground mb-1">
+            <p className="text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
               {CATEGORY_LABELS[category] ?? category}
             </p>
-            <div className="divide-y">
+            <div className="divide-y divide-border/50">
               {catItems.map((item) => renderItem(item, true))}
             </div>
           </div>
@@ -365,13 +366,11 @@ export function GroceryList({
   }
 
   function renderByRecipe() {
-    // Group items by source_label (recipe name)
     const recipeItems = new Map<string, GroceryItem[]>();
     const otherItems: GroceryItem[] = [];
 
     for (const item of displayItems) {
       if (item.source_label) {
-        // source_label can be "Recipe A" or "Recipe A, Recipe B" (merged)
         const key = item.source_label;
         const list = recipeItems.get(key) ?? [];
         list.push(item);
@@ -385,29 +384,27 @@ export function GroceryList({
 
     return (
       <>
-        {/* Urgent section */}
         {urgentItems.length > 0 && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900 dark:bg-amber-950/20">
-            <p className="text-xs font-medium text-amber-600 mb-1 flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3" />
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-3.5 dark:border-amber-900 dark:bg-amber-950/20">
+            <p className="text-xs font-semibold text-amber-600 mb-1.5 flex items-center gap-1.5">
+              <AlertTriangle className="h-3.5 w-3.5" />
               Urgent
             </p>
-            <div className="divide-y">
+            <div className="divide-y divide-border/50">
               {urgentItems.map((item) => renderItem(item, true))}
             </div>
           </div>
         )}
 
-        {/* Planned meals with their ingredients */}
         {meals.map((meal) => {
           const mealItems = recipeItems.get(meal.recipeName) ?? [];
           const typeLabel = meal.type === "dejeuner" ? "Dej." : "Souper";
 
           return (
-            <div key={`${meal.date}-${meal.type}`} className="rounded-xl border p-3">
+            <div key={`${meal.date}-${meal.type}`} className="rounded-2xl bg-card shadow-sm border border-border/50 p-3.5">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-sm font-medium">{meal.recipeName}</p>
-                <span className="text-[10px] text-muted-foreground">
+                <p className="text-sm font-semibold">{meal.recipeName}</p>
+                <span className="text-[10px] text-muted-foreground font-medium">
                   {meal.eaterCount} pers.
                 </span>
               </div>
@@ -415,7 +412,7 @@ export function GroceryList({
                 {meal.dayLabel} · {typeLabel} · {meal.cookName}
               </p>
               {mealItems.length > 0 ? (
-                <div className="divide-y">
+                <div className="divide-y divide-border/50">
                   {mealItems.filter((i) => i.priority !== "urgent").map((item) => renderItem(item))}
                 </div>
               ) : (
@@ -427,25 +424,23 @@ export function GroceryList({
           );
         })}
 
-        {/* Recipes not linked to a planned meal (merged or orphaned) */}
         {Array.from(recipeItems.entries())
           .filter(([label]) => !meals.some((m) => m.recipeName === label))
           .map(([label, items]) => (
-            <div key={label} className="rounded-xl border p-3">
-              <p className="text-sm font-medium mb-2">{label}</p>
-              <div className="divide-y">
+            <div key={label} className="rounded-2xl bg-card shadow-sm border border-border/50 p-3.5">
+              <p className="text-sm font-semibold mb-2">{label}</p>
+              <div className="divide-y divide-border/50">
                 {items.filter((i) => i.priority !== "urgent").map((item) => renderItem(item))}
               </div>
             </div>
           ))}
 
-        {/* Other items (manual adds) */}
         {otherItems.length > 0 && (
           <div>
-            <p className="text-xs font-medium text-muted-foreground mb-1">
+            <p className="text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
               Autres articles
             </p>
-            <div className="divide-y">
+            <div className="divide-y divide-border/50">
               {otherItems.map((item) => renderItem(item, false))}
             </div>
           </div>
@@ -458,10 +453,10 @@ export function GroceryList({
     <div className="space-y-4">
       {/* Duty badge */}
       {dutyPerson && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <ShoppingCart className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-2.5 text-xs text-muted-foreground bg-card rounded-2xl border border-border/50 shadow-sm px-4 py-3">
+          <ShoppingCart className="h-4 w-4" />
           <span>
-            Courses: <strong>{dutyPerson.display_name}</strong>
+            Courses: <strong className="text-foreground">{dutyPerson.display_name}</strong>
             {dutyPerson.id === currentUserId && " (toi)"}
           </span>
         </div>
@@ -469,13 +464,13 @@ export function GroceryList({
 
       {/* Mode toggles */}
       <div className="flex items-center justify-between">
-        <div className="flex gap-1">
+        <div className="flex gap-1 bg-muted/60 rounded-xl p-0.5">
           <button
             onClick={() => setViewMode("recipe")}
             className={cn(
-              "text-xs px-2.5 py-1 rounded-full transition-colors",
+              "relative text-xs font-medium px-3 py-1.5 rounded-lg transition-colors min-h-[32px]",
               viewMode === "recipe"
-                ? "bg-foreground text-background font-medium"
+                ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground"
             )}
           >
@@ -484,9 +479,9 @@ export function GroceryList({
           <button
             onClick={() => setViewMode("category")}
             className={cn(
-              "text-xs px-2.5 py-1 rounded-full transition-colors",
+              "relative text-xs font-medium px-3 py-1.5 rounded-lg transition-colors min-h-[32px]",
               viewMode === "category"
-                ? "bg-foreground text-background font-medium"
+                ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground"
             )}
           >
@@ -498,20 +493,20 @@ export function GroceryList({
           <button
             onClick={() => setShoppingMode(!shoppingMode)}
             className={cn(
-              "text-xs px-2.5 py-1 rounded-full border transition-colors",
+              "text-xs font-medium px-3 py-1.5 rounded-xl border transition-all active:scale-[0.95] min-h-[32px]",
               shoppingMode
                 ? "bg-primary text-primary-foreground border-primary"
-                : "text-muted-foreground"
+                : "text-muted-foreground border-border"
             )}
           >
-            {shoppingMode ? "Courses" : "Courses"}
+            Courses
           </button>
 
           {shoppingMode && items.some((i) => i.checked) && (
             <button
               onClick={finishShopping}
               disabled={archiving}
-              className="text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+              className="text-xs text-primary font-semibold transition-colors disabled:opacity-50"
             >
               {archiving ? "..." : "Terminer"}
             </button>
@@ -528,14 +523,14 @@ export function GroceryList({
             if (e.key === "Enter") addItem(quickAdd);
           }}
           placeholder="Ajouter un article..."
-          className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+          className="flex-1 rounded-2xl border bg-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 min-h-[48px] shadow-sm"
         />
         <button
           onClick={() => addItem(quickAdd)}
           disabled={!quickAdd.trim()}
-          className="rounded-lg bg-primary text-primary-foreground px-3 py-2 disabled:opacity-50 transition-colors active:bg-primary/90"
+          className="rounded-2xl bg-primary text-primary-foreground px-4 py-3 disabled:opacity-50 transition-all active:scale-[0.95] min-h-[48px] shadow-sm"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-5 w-5" />
         </button>
       </div>
 
