@@ -8,6 +8,8 @@ import { getWeekMonday, getWeekDates, toDateString } from "@/lib/rotation";
 import { GenerateWeekButton } from "@/components/dashboard/generate-week-button";
 import { MiniWeekPreview } from "@/components/dashboard/mini-week-preview";
 import { ChoreChecklist } from "@/components/dashboard/chore-checklist";
+import { TodoWidget } from "@/components/dashboard/todo-widget";
+import { CalendarWidget } from "@/components/dashboard/calendar-widget";
 import { UserAvatar } from "@/components/shared/user-avatar";
 
 export default async function DashboardPage() {
@@ -35,7 +37,13 @@ export default async function DashboardPage() {
   const nextMonday = addWeeks(monday, 1);
   const nextWeekStartStr = toDateString(nextMonday);
 
-  const [{ data: currentWeek }, { data: nextWeek }] = await Promise.all([
+  const [
+    { data: currentWeek },
+    { data: nextWeek },
+    { data: pendingTodos },
+    { data: todayEvents },
+    { data: tomorrowEvents },
+  ] = await Promise.all([
     supabase
       .from("weeks")
       .select("id, generated")
@@ -46,6 +54,23 @@ export default async function DashboardPage() {
       .select("id, generated")
       .eq("week_start", nextWeekStartStr)
       .single(),
+    supabase
+      .from("todos")
+      .select("id, title, completed, priority")
+      .eq("completed", false)
+      .order("priority", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("calendar_events")
+      .select("id, title, date, start_time, all_day, category")
+      .eq("date", todayStr)
+      .order("start_time"),
+    supabase
+      .from("calendar_events")
+      .select("id, title, date, start_time, all_day, category")
+      .eq("date", tomorrowStr)
+      .order("start_time"),
   ]);
 
   const hasCurrentWeek = currentWeek?.generated;
@@ -257,6 +282,24 @@ export default async function DashboardPage() {
     }
   }
 
+  // Todo pending action
+  const todoCount = pendingTodos?.length ?? 0;
+  if (todoCount > 0) {
+    pendingActions.push({
+      text: `${todoCount} tache${todoCount > 1 ? "s" : ""} a faire`,
+      href: "/todos",
+    });
+  }
+
+  // Today's events action
+  const todayEventCount = todayEvents?.length ?? 0;
+  if (todayEventCount > 0) {
+    pendingActions.push({
+      text: `${todayEventCount} evenement${todayEventCount > 1 ? "s" : ""} aujourd'hui`,
+      href: "/agenda",
+    });
+  }
+
   // Fetch next week mini data
   if (hasNextWeek) {
     const [{ data: nextDinners }, { data: nextLunches }] = await Promise.all([
@@ -334,6 +377,22 @@ export default async function DashboardPage() {
           </div>
           <ChoreChecklist chores={myChores} />
         </div>
+      )}
+
+      {/* Todo widget */}
+      {(pendingTodos?.length ?? 0) > 0 && (
+        <TodoWidget
+          todos={(pendingTodos ?? []).slice(0, 3)}
+          totalCount={pendingTodos?.length ?? 0}
+        />
+      )}
+
+      {/* Calendar widget */}
+      {((todayEvents?.length ?? 0) > 0 || (tomorrowEvents?.length ?? 0) > 0) && (
+        <CalendarWidget
+          todayEvents={todayEvents ?? []}
+          tomorrowEvents={tomorrowEvents ?? []}
+        />
       )}
 
       {/* Meals + Grocery */}

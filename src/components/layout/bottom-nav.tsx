@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, ShoppingCart, UtensilsCrossed, Car } from "lucide-react";
+import { Home, CalendarDays, ShoppingCart, UtensilsCrossed, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -10,7 +10,7 @@ const tabs = [
   { href: "/week", label: "Semaine", icon: Calendar },
   { href: "/grocery", label: "Epicerie", icon: ShoppingCart },
   { href: "/meals", label: "Repas", icon: UtensilsCrossed },
-  { href: "/car", label: "Auto", icon: Car },
+  { href: "/agenda", label: "Agenda", icon: CalendarDays },
 ] as const;
 
 export function BottomNav() {

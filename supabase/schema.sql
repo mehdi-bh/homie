@@ -238,24 +238,43 @@ create index grocery_items_archived on grocery_items(archived) where not archive
 create trigger grocery_items_updated_at before update on grocery_items
   for each row execute function update_updated_at();
 
--- car_reservations
-create table car_reservations (
+-- todos
+create table todos (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references profiles(id),
-  date date not null,
-  start_time time not null,
-  end_time time not null,
+  title text not null,
   note text,
-  preset text check (preset in ('all_day', 'morning', 'afternoon', 'evening')),
-  is_grocery boolean not null default false,
+  created_by uuid not null references profiles(id),
+  completed boolean not null default false,
+  completed_at timestamptz,
+  priority smallint not null default 0, -- 0=normal, 1=high
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint car_time_order check (end_time > start_time)
+  updated_at timestamptz not null default now()
 );
 
-create index car_reservations_date on car_reservations(date);
+create index todos_pending on todos(completed) where not completed;
 
-create trigger car_reservations_updated_at before update on car_reservations
+create trigger todos_updated_at before update on todos
+  for each row execute function update_updated_at();
+
+-- calendar_events
+create table calendar_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profiles(id),
+  title text not null,
+  date date not null,
+  start_time time,
+  end_time time,
+  all_day boolean not null default false,
+  category text not null default 'other'
+    check (category in ('car', 'family', 'appointment', 'other')),
+  note text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index calendar_events_date on calendar_events(date);
+
+create trigger calendar_events_updated_at before update on calendar_events
   for each row execute function update_updated_at();
 
 -- swaps
@@ -308,7 +327,8 @@ alter table chore_definitions enable row level security;
 alter table chore_slots enable row level security;
 alter table grocery_slots enable row level security;
 alter table grocery_items enable row level security;
-alter table car_reservations enable row level security;
+alter table todos enable row level security;
+alter table calendar_events enable row level security;
 alter table swaps enable row level security;
 alter table push_subscriptions enable row level security;
 
@@ -321,7 +341,7 @@ begin
     select unnest(array[
       'profiles', 'household_settings', 'weeks', 'recipes', 'recipe_ingredients',
       'dinner_slots', 'lunch_slots', 'lunch_preferences', 'chore_definitions', 'chore_slots',
-      'grocery_slots', 'grocery_items', 'car_reservations', 'swaps', 'push_subscriptions'
+      'grocery_slots', 'grocery_items', 'todos', 'calendar_events', 'swaps', 'push_subscriptions'
     ])
   loop
     execute format(
@@ -394,7 +414,8 @@ alter publication supabase_realtime add table lunch_slots;
 alter publication supabase_realtime add table lunch_preferences;
 alter publication supabase_realtime add table chore_definitions;
 alter publication supabase_realtime add table chore_slots;
-alter publication supabase_realtime add table car_reservations;
+alter publication supabase_realtime add table todos;
+alter publication supabase_realtime add table calendar_events;
 alter publication supabase_realtime add table swaps;
 
 -- ============================================================================
