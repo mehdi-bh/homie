@@ -3,7 +3,15 @@
 import { useRef, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ShoppingCart, Check, SkipForward, Undo2 } from "lucide-react";
+import {
+  ShoppingCart,
+  Check,
+  SkipForward,
+  Undo2,
+  UtensilsCrossed,
+  X,
+  MessageSquareText,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toDateString } from "@/lib/rotation";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -173,25 +181,42 @@ export function LunchDayList({
             <div
               key={slot.id}
               className={cn(
-                "rounded-2xl bg-card shadow-sm border border-border/50 p-4",
+                "rounded-2xl border p-4 transition-all",
+                slot.recipe_name
+                  ? "bg-card shadow-sm border-border/50"
+                  : "bg-card/60 border-dashed border-border/30",
                 isToday && "ring-2 ring-primary/20 shadow-md",
                 isPast && "opacity-45",
-                isSkipped && "opacity-30"
+                isSkipped && "opacity-30 !border-solid !border-border/30 bg-muted/30"
               )}
               style={{
                 borderLeftWidth: 4,
+                borderLeftStyle: "solid",
                 borderLeftColor: isSkipped ? "#9ca3af" : slot.cook.color,
               }}
             >
-              {/* Row 1: Day + today badge + skip */}
+              {/* Header: Cook avatar + Day + today badge ... skip */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <p className="font-bold capitalize text-[15px]">{dayLabel}</p>
-                  {isToday && (
-                    <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                      Aujourd&apos;hui
-                    </span>
-                  )}
+                <div className="flex items-center gap-2.5">
+                  <UserAvatar
+                    src={slot.cook.avatar_url}
+                    fallback={slot.cook.avatar_emoji}
+                    size="sm"
+                  />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold capitalize text-[15px] leading-tight">{dayLabel}</p>
+                      {isToday && (
+                        <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full shrink-0">
+                          Aujourd&apos;hui
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                      {slot.cook.display_name}
+                      {isCook && " (toi)"}
+                    </p>
+                  </div>
                 </div>
                 {!isPast && (
                   <button
@@ -209,139 +234,153 @@ export function LunchDayList({
                         Undo
                       </>
                     ) : (
-                      <>
-                        <SkipForward className="h-3 w-3" />
-                        Skip
-                      </>
+                      <SkipForward className="h-3.5 w-3.5" />
                     )}
                   </button>
                 )}
-              </div>
-
-              {/* Row 2: Cook */}
-              <div className="flex items-center gap-2 mt-1.5">
-                <UserAvatar
-                  src={slot.cook.avatar_url}
-                  fallback={slot.cook.avatar_emoji}
-                  size="sm"
-                />
-                <span className="text-sm text-muted-foreground">
-                  {slot.cook.display_name}
-                  {isCook && " (toi)"}
-                </span>
               </div>
 
               {!isSkipped && (
                 <>
                   {/* Recipe */}
                   <div className="mt-3">
-                    <button
-                      onClick={() => {
-                        if (isCook && !isPast) setPickerSlotId(slot.id);
-                      }}
-                      disabled={!isCook || isPast}
-                      className={cn(
-                        "text-sm w-full text-left rounded-xl px-3 py-2.5 min-h-[44px] flex items-center transition-all",
-                        slot.recipe_name
-                          ? "text-foreground font-semibold bg-muted/30"
-                          : "text-muted-foreground italic bg-muted/20",
-                        isCook && !isPast && "active:scale-[0.98] active:bg-muted/50"
-                      )}
-                    >
-                      {slot.recipe_name ||
-                        (isCook && !isPast
-                          ? "Choisir une recette..."
-                          : "Pas encore decide")}
-                    </button>
-                    {slot.recipe_name && isCook && !isPast && (
-                      <button
-                        onClick={() => clearRecipe(slot.id)}
-                        className="text-[10px] text-muted-foreground hover:text-foreground mt-1 ml-3"
+                    {slot.recipe_name ? (
+                      <div
+                        className={cn(
+                          "flex items-center gap-2.5 rounded-xl bg-primary/6 px-3 py-2.5",
+                          isCook && !isPast && "cursor-pointer active:scale-[0.98] active:bg-primary/10 transition-all"
+                        )}
+                        onClick={() => {
+                          if (isCook && !isPast) setPickerSlotId(slot.id);
+                        }}
                       >
-                        Retirer la recette
+                        <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <Check className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                        <span className="text-sm font-semibold text-foreground flex-1 min-w-0 truncate">
+                          {slot.recipe_name}
+                        </span>
+                        {isCook && !isPast && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              clearRecipe(slot.id);
+                            }}
+                            className="h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (isCook && !isPast) setPickerSlotId(slot.id);
+                        }}
+                        disabled={!isCook || isPast}
+                        className={cn(
+                          "w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed py-3 transition-all",
+                          isCook && !isPast
+                            ? "border-primary/25 text-muted-foreground hover:border-primary/40 hover:bg-primary/5 active:scale-[0.98]"
+                            : "border-border/30 text-muted-foreground/40"
+                        )}
+                      >
+                        <UtensilsCrossed className="h-4 w-4" />
+                        <span className="text-sm">
+                          {isCook && !isPast
+                            ? "Choisir une recette"
+                            : "Pas encore decide"}
+                        </span>
                       </button>
                     )}
                   </div>
 
-                  {/* Note (anyone can edit) */}
-                  <div className="mt-2">
-                    {editing === slot.id ? (
-                      <input
-                        autoFocus
-                        className="w-full bg-transparent text-sm outline-none border-b-2 border-primary pb-1 text-muted-foreground px-1"
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        onBlur={() => {
-                          if (!escapedRef.current) {
-                            updateNote(slot.id, editValue.trim() || null);
-                          }
-                          escapedRef.current = false;
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter")
-                            (e.target as HTMLInputElement).blur();
-                          if (e.key === "Escape") {
-                            escapedRef.current = true;
-                            setEditing(null);
-                          }
-                        }}
-                        placeholder="Ajouter une note..."
-                      />
-                    ) : (
-                      <p
-                        className={cn(
-                          "text-xs px-1 py-1 rounded-lg transition-colors",
-                          slot.note
-                            ? "text-muted-foreground"
-                            : "text-muted-foreground/30 italic",
-                          !isPast && "cursor-text active:bg-muted/30"
-                        )}
-                        onClick={() => {
-                          if (!isPast) {
-                            setEditing(slot.id);
-                            setEditValue(slot.note || "");
-                          }
-                        }}
-                      >
-                        {slot.note || "Ajouter une note..."}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Eaters */}
-                  <div className="flex items-center gap-1.5 mt-3">
-                    {profiles.map((profile) => {
-                      const isEating = slot.eaters.includes(profile.id);
-                      return (
-                        <button
-                          key={profile.id}
-                          onClick={() =>
-                            !isPast &&
-                            toggleEater(slot.id, slot.eaters, profile.id)
-                          }
-                          disabled={isPast}
-                          className={cn(
-                            "h-10 w-10 rounded-full flex items-center justify-center transition-all border-[2.5px] active:scale-90",
-                            isEating
-                              ? "opacity-100"
-                              : "border-transparent opacity-20"
-                          )}
-                          style={{
-                            borderColor: isEating ? profile.color : "transparent",
-                          }}
-                        >
-                          <UserAvatar
-                            src={profile.avatar_url}
-                            fallback={profile.avatar_emoji}
-                            size="sm"
-                            className="ring-0 h-[30px] w-[30px]"
+                  {/* Note + Eaters row */}
+                  <div className="flex items-center justify-between mt-3 gap-2">
+                    {/* Note */}
+                    <div className="min-w-0 flex-1">
+                      {editing === slot.id ? (
+                        <div className="flex items-center gap-1.5">
+                          <MessageSquareText className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <input
+                            autoFocus
+                            className="flex-1 min-w-0 bg-transparent text-xs outline-none border-b-2 border-primary pb-0.5 text-foreground"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onBlur={() => {
+                              if (!escapedRef.current) {
+                                updateNote(slot.id, editValue.trim() || null);
+                              }
+                              escapedRef.current = false;
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter")
+                                (e.target as HTMLInputElement).blur();
+                              if (e.key === "Escape") {
+                                escapedRef.current = true;
+                                setEditing(null);
+                              }
+                            }}
+                            placeholder="Note..."
                           />
+                        </div>
+                      ) : (
+                        <button
+                          className={cn(
+                            "flex items-center gap-1.5 rounded-lg px-1.5 py-1 transition-colors min-w-0",
+                            slot.note
+                              ? "text-muted-foreground"
+                              : "text-muted-foreground/30",
+                            !isPast && "hover:bg-muted/30 active:bg-muted/50 cursor-text"
+                          )}
+                          onClick={() => {
+                            if (!isPast) {
+                              setEditing(slot.id);
+                              setEditValue(slot.note || "");
+                            }
+                          }}
+                          disabled={isPast}
+                        >
+                          <MessageSquareText className="h-3.5 w-3.5 shrink-0" />
+                          {slot.note && (
+                            <span className="text-xs truncate">{slot.note}</span>
+                          )}
                         </button>
-                      );
-                    })}
-                    <span className="text-xs text-muted-foreground ml-1 font-medium">
-                      {slot.eaters.length} pers.
-                    </span>
+                      )}
+                    </div>
+
+                    {/* Eaters */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {profiles.map((profile) => {
+                        const isEating = slot.eaters.includes(profile.id);
+                        return (
+                          <button
+                            key={profile.id}
+                            onClick={() =>
+                              !isPast &&
+                              toggleEater(slot.id, slot.eaters, profile.id)
+                            }
+                            disabled={isPast}
+                            className={cn(
+                              "h-8 w-8 rounded-full flex items-center justify-center transition-all border-2 active:scale-90",
+                              isEating
+                                ? "opacity-100"
+                                : "border-transparent opacity-20"
+                            )}
+                            style={{
+                              borderColor: isEating ? profile.color : "transparent",
+                            }}
+                          >
+                            <UserAvatar
+                              src={profile.avatar_url}
+                              fallback={profile.avatar_emoji}
+                              size="xs"
+                              className="ring-0 h-[24px] w-[24px]"
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Grocery push */}
@@ -356,7 +395,7 @@ export function LunchDayList({
                     </button>
                   )}
                   {slot.ingredients_pushed && (
-                    <div className="mt-3 flex items-center gap-1.5 text-[11px] text-emerald-600 font-medium">
+                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-emerald-600 font-medium px-1">
                       <Check className="h-3.5 w-3.5" />
                       Ingredients envoyes
                     </div>
