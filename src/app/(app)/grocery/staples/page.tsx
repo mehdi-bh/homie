@@ -34,7 +34,7 @@ export default function StaplesPage() {
       .from("grocery_staples")
       .select("id, name, category, default_quantity, default_unit")
       .order("sort_order")
-      .then(({ data }) => setStaples(data ?? []));
+      .then(({ data }: { data: Staple[] | null }) => setStaples(data ?? []));
   }, []);
 
   async function addStaple() {
