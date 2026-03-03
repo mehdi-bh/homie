@@ -90,6 +90,19 @@ export function GroceryList({
 
   async function addItem(name: string) {
     if (!name.trim()) return;
+    const tempId = crypto.randomUUID();
+    const optimistic: GroceryItem = {
+      id: tempId,
+      name: name.trim(),
+      quantity: null,
+      unit: null,
+      category: "autre",
+      priority: "weekly",
+      checked: false,
+      source_label: null,
+    };
+    setItems((prev) => [...prev, optimistic]);
+    setQuickAdd("");
     const supabase = createClient();
     const { data } = await supabase
       .from("grocery_items")
@@ -101,12 +114,25 @@ export function GroceryList({
       .select("id, name, quantity, unit, category, priority, checked, source_label")
       .single();
     if (data) {
-      setItems((prev) => [...prev, data as GroceryItem]);
+      setItems((prev) =>
+        prev.map((i) => (i.id === tempId ? (data as GroceryItem) : i))
+      );
     }
-    setQuickAdd("");
   }
 
   async function addStaple(staple: GroceryStaple) {
+    const tempId = crypto.randomUUID();
+    const optimistic: GroceryItem = {
+      id: tempId,
+      name: staple.name,
+      quantity: staple.default_quantity,
+      unit: staple.default_unit,
+      category: staple.category,
+      priority: "weekly",
+      checked: false,
+      source_label: null,
+    };
+    setItems((prev) => [...prev, optimistic]);
     const supabase = createClient();
     const { data } = await supabase
       .from("grocery_items")
@@ -120,7 +146,9 @@ export function GroceryList({
       .select("id, name, quantity, unit, category, priority, checked, source_label")
       .single();
     if (data) {
-      setItems((prev) => [...prev, data as GroceryItem]);
+      setItems((prev) =>
+        prev.map((i) => (i.id === tempId ? (data as GroceryItem) : i))
+      );
     }
   }
 

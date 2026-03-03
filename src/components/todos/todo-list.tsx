@@ -55,6 +55,19 @@ export function TodoList({
 
   async function addTodo(title: string) {
     if (!title.trim()) return;
+    const tempId = crypto.randomUUID();
+    const optimistic: Todo = {
+      id: tempId,
+      title: title.trim(),
+      note: null,
+      created_by: currentUserId,
+      completed: false,
+      completed_at: null,
+      priority: 0,
+      created_at: new Date().toISOString(),
+    };
+    setTodos((prev) => [optimistic, ...prev]);
+    setQuickAdd("");
     const supabase = createClient();
     const { data } = await supabase
       .from("todos")
@@ -62,9 +75,10 @@ export function TodoList({
       .select("id, title, note, created_by, completed, completed_at, priority, created_at")
       .single();
     if (data) {
-      setTodos((prev) => [data as Todo, ...prev]);
+      setTodos((prev) =>
+        prev.map((t) => (t.id === tempId ? (data as Todo) : t))
+      );
     }
-    setQuickAdd("");
   }
 
   async function toggleTodo(id: string) {

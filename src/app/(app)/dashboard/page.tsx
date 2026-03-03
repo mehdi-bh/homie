@@ -116,114 +116,108 @@ export default async function DashboardPage() {
   let miniWeek: MiniDay[] | null = null;
   let nextMiniWeek: MiniDay[] | null = null;
 
+  // Round 2: fire ALL conditional queries in a single Promise.all
+  type ConditionalResults = {
+    choresData: typeof myChores | null;
+    dinnerData: { note: string | null; status: string; eaters: unknown; cook_id: string; recipe: unknown; cook: unknown } | null;
+    lunchData: { id: string; cook_id: string; eaters: unknown; recipe: unknown; cook: unknown } | null;
+    allDinners: Array<{ date: string; status: string; cook_id: string | null; cook: unknown }> | null;
+    allLunches: Array<{ date: string; cook_id: string | null; cook: unknown }> | null;
+    tomorrowDinnerData: { cook_id: string | null } | null;
+    tomorrowLunchData: { cook_id: string | null } | null;
+    groceryItems: Array<{ id: string; priority: string }> | null;
+    grocerySlot: { assigned_to: string | null } | null;
+    nextDinners: Array<{ date: string; status: string; cook_id: string | null; cook: unknown }> | null;
+    nextLunches: Array<{ date: string; cook_id: string | null; cook: unknown }> | null;
+  };
+
+  const conditional: ConditionalResults = {
+    choresData: null, dinnerData: null, lunchData: null,
+    allDinners: null, allLunches: null,
+    tomorrowDinnerData: null, tomorrowLunchData: null,
+    groceryItems: null, grocerySlot: null,
+    nextDinners: null, nextLunches: null,
+  };
+
+  const queries: Array<Promise<void>> = [];
+
   if (hasCurrentWeek) {
-    const [
-      { data: choresData },
-      { data: dinnerData },
-      { data: lunchData },
-      { data: allDinners },
-      { data: allLunches },
-      { data: tomorrowDinnerData },
-      { data: tomorrowLunchData },
-      { data: groceryItems },
-      { data: grocerySlot },
-    ] = await Promise.all([
-      supabase
-        .from("chore_slots")
-        .select("id, chore_name, status, due_date")
-        .eq("week_id", currentWeek!.id)
-        .eq("assigned_to", user.id)
-        .order("chore_name"),
-      supabase
-        .from("dinner_slots")
-        .select(
-          "note, status, eaters, cook_id, recipe:recipes!dinner_slots_recipe_id_fkey(name), cook:profiles!dinner_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)"
-        )
-        .eq("week_id", currentWeek!.id)
-        .eq("date", todayStr)
-        .single(),
-      supabase
-        .from("lunch_slots")
-        .select(
-          "id, cook_id, eaters, recipe:recipes!lunch_slots_recipe_id_fkey(name), cook:profiles!lunch_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)"
-        )
-        .eq("week_id", currentWeek!.id)
-        .eq("date", todayStr)
-        .single(),
-      supabase
-        .from("dinner_slots")
-        .select(
-          "date, status, cook_id, cook:profiles!dinner_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)"
-        )
-        .eq("week_id", currentWeek!.id)
-        .order("date"),
-      supabase
-        .from("lunch_slots")
-        .select(
-          "date, cook_id, cook:profiles!lunch_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)"
-        )
-        .eq("week_id", currentWeek!.id)
-        .order("date"),
-      supabase
-        .from("dinner_slots")
-        .select("cook_id")
-        .eq("week_id", currentWeek!.id)
-        .eq("date", tomorrowStr)
-        .single(),
-      supabase
-        .from("lunch_slots")
-        .select("cook_id")
-        .eq("week_id", currentWeek!.id)
-        .eq("date", tomorrowStr)
-        .single(),
-      supabase
-        .from("grocery_items")
-        .select("id, priority")
-        .eq("archived", false)
-        .eq("checked", false),
-      supabase
-        .from("grocery_slots")
-        .select("assigned_to")
-        .eq("week_id", currentWeek!.id)
-        .single(),
-    ]);
+    queries.push(
+      Promise.all([
+        supabase.from("chore_slots").select("id, chore_name, status, due_date").eq("week_id", currentWeek!.id).eq("assigned_to", user.id).order("chore_name"),
+        supabase.from("dinner_slots").select("note, status, eaters, cook_id, recipe:recipes!dinner_slots_recipe_id_fkey(name), cook:profiles!dinner_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)").eq("week_id", currentWeek!.id).eq("date", todayStr).single(),
+        supabase.from("lunch_slots").select("id, cook_id, eaters, recipe:recipes!lunch_slots_recipe_id_fkey(name), cook:profiles!lunch_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)").eq("week_id", currentWeek!.id).eq("date", todayStr).single(),
+        supabase.from("dinner_slots").select("date, status, cook_id, cook:profiles!dinner_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)").eq("week_id", currentWeek!.id).order("date"),
+        supabase.from("lunch_slots").select("date, cook_id, cook:profiles!lunch_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)").eq("week_id", currentWeek!.id).order("date"),
+        supabase.from("dinner_slots").select("cook_id").eq("week_id", currentWeek!.id).eq("date", tomorrowStr).single(),
+        supabase.from("lunch_slots").select("cook_id").eq("week_id", currentWeek!.id).eq("date", tomorrowStr).single(),
+        supabase.from("grocery_items").select("id, priority").eq("archived", false).eq("checked", false),
+        supabase.from("grocery_slots").select("assigned_to").eq("week_id", currentWeek!.id).single(),
+      ]).then(([chores, dinner, lunch, allD, allL, tmrwD, tmrwL, grocery, gSlot]) => {
+        conditional.choresData = chores.data as typeof myChores;
+        conditional.dinnerData = dinner.data as ConditionalResults["dinnerData"];
+        conditional.lunchData = lunch.data as ConditionalResults["lunchData"];
+        conditional.allDinners = allD.data as ConditionalResults["allDinners"];
+        conditional.allLunches = allL.data as ConditionalResults["allLunches"];
+        conditional.tomorrowDinnerData = tmrwD.data as ConditionalResults["tomorrowDinnerData"];
+        conditional.tomorrowLunchData = tmrwL.data as ConditionalResults["tomorrowLunchData"];
+        conditional.groceryItems = grocery.data as ConditionalResults["groceryItems"];
+        conditional.grocerySlot = gSlot.data as ConditionalResults["grocerySlot"];
+      })
+    );
+  }
 
-    myChores = choresData ?? [];
+  if (hasNextWeek) {
+    queries.push(
+      Promise.all([
+        supabase.from("dinner_slots").select("date, status, cook_id, cook:profiles!dinner_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)").eq("week_id", nextWeek!.id).order("date"),
+        supabase.from("lunch_slots").select("date, cook_id, cook:profiles!lunch_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)").eq("week_id", nextWeek!.id).order("date"),
+      ]).then(([nextD, nextL]) => {
+        conditional.nextDinners = nextD.data as ConditionalResults["nextDinners"];
+        conditional.nextLunches = nextL.data as ConditionalResults["nextLunches"];
+      })
+    );
+  }
 
-    const uncheckedItems = groceryItems ?? [];
+  await Promise.all(queries);
+
+  if (hasCurrentWeek) {
+    myChores = conditional.choresData ?? [];
+
+    const uncheckedItems = conditional.groceryItems ?? [];
     groceryItemCount = uncheckedItems.length;
     groceryUrgentCount = uncheckedItems.filter((i) => i.priority === "urgent").length;
-    groceryDutyUserId = grocerySlot?.assigned_to ?? null;
+    groceryDutyUserId = conditional.grocerySlot?.assigned_to ?? null;
 
-    if (dinnerData) {
-      const cook = dinnerData.cook as unknown as ProfileInfo;
+    if (conditional.dinnerData) {
+      const cook = conditional.dinnerData.cook as unknown as ProfileInfo;
       todayDinner = {
-        note: dinnerData.note,
-        recipe_name: (dinnerData.recipe as unknown as { name: string } | null)?.name ?? null,
-        status: dinnerData.status,
-        eaters: (dinnerData.eaters ?? []) as string[],
+        note: conditional.dinnerData.note,
+        recipe_name: (conditional.dinnerData.recipe as unknown as { name: string } | null)?.name ?? null,
+        status: conditional.dinnerData.status,
+        eaters: (conditional.dinnerData.eaters ?? []) as string[],
         cook,
-        isCook: dinnerData.cook_id === user.id,
+        isCook: conditional.dinnerData.cook_id === user.id,
       };
     }
 
-    if (lunchData) {
-      const cook = lunchData.cook as unknown as ProfileInfo;
+    if (conditional.lunchData) {
+      const cook = conditional.lunchData.cook as unknown as ProfileInfo;
       todayLunch = {
         cook,
-        isCook: lunchData.cook_id === user.id,
-        recipe_name: (lunchData.recipe as unknown as { name: string } | null)?.name ?? null,
-        eaters: (lunchData.eaters ?? []) as string[],
+        isCook: conditional.lunchData.cook_id === user.id,
+        recipe_name: (conditional.lunchData.recipe as unknown as { name: string } | null)?.name ?? null,
+        eaters: (conditional.lunchData.eaters ?? []) as string[],
       };
     }
 
-    tomorrowCookDinner = tomorrowDinnerData?.cook_id === user.id;
-    tomorrowCookLunch = tomorrowLunchData?.cook_id === user.id;
+    tomorrowCookDinner = conditional.tomorrowDinnerData?.cook_id === user.id;
+    tomorrowCookLunch = conditional.tomorrowLunchData?.cook_id === user.id;
 
     function buildMiniWeek(
       dates: Date[],
-      dinners: typeof allDinners,
-      lunches: typeof allLunches
+      dinners: ConditionalResults["allDinners"],
+      lunches: ConditionalResults["allLunches"]
     ): MiniDay[] {
       const dinnerMap = new Map<string, { cook: unknown; status: string; cook_id: string | null }>();
       for (const d of dinners ?? []) dinnerMap.set(d.date, d);
@@ -243,7 +237,7 @@ export default async function DashboardPage() {
       });
     }
 
-    miniWeek = buildMiniWeek(getWeekDates(monday), allDinners, allLunches);
+    miniWeek = buildMiniWeek(getWeekDates(monday), conditional.allDinners, conditional.allLunches);
 
     if (tomorrowCookLunch) {
       pendingActions.push({
@@ -297,28 +291,11 @@ export default async function DashboardPage() {
   }
 
   if (hasNextWeek) {
-    const [{ data: nextDinners }, { data: nextLunches }] = await Promise.all([
-      supabase
-        .from("dinner_slots")
-        .select(
-          "date, status, cook_id, cook:profiles!dinner_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)"
-        )
-        .eq("week_id", nextWeek!.id)
-        .order("date"),
-      supabase
-        .from("lunch_slots")
-        .select(
-          "date, cook_id, cook:profiles!lunch_slots_cook_id_fkey(id, display_name, avatar_emoji, avatar_url, color)"
-        )
-        .eq("week_id", nextWeek!.id)
-        .order("date"),
-    ]);
-
     const nextDates = getWeekDates(nextMonday);
     const dinnerMap = new Map<string, { cook: unknown; status: string; cook_id: string | null }>();
-    for (const d of nextDinners ?? []) dinnerMap.set(d.date, d);
+    for (const d of conditional.nextDinners ?? []) dinnerMap.set(d.date, d);
     const lunchMap = new Map<string, { cook: unknown; cook_id: string | null }>();
-    for (const l of nextLunches ?? []) lunchMap.set(l.date, l);
+    for (const l of conditional.nextLunches ?? []) lunchMap.set(l.date, l);
 
     nextMiniWeek = nextDates.map((date) => {
       const dateStr = toDateString(date);

@@ -59,49 +59,52 @@ export async function POST(req: NextRequest) {
   const eaterCount = (slot.eaters as string[])?.length || 1;
   const sourceLabel = recipe?.name ?? "Recette";
 
-  // Try RPC first, fall back to direct INSERT
-  let itemCount = 0;
+  // Fire all RPC calls in parallel
   const errors: string[] = [];
 
-  for (const ing of ingredients) {
-    const quantity =
-      ing.scaling_type === "per_person"
-        ? Number(ing.quantity) * eaterCount
-        : Number(ing.quantity);
+  const results = await Promise.all(
+    ingredients.map(async (ing) => {
+      const quantity =
+        ing.scaling_type === "per_person"
+          ? Number(ing.quantity) * eaterCount
+          : Number(ing.quantity);
 
-    const { error: rpcError } = await supabase.rpc("merge_grocery_item", {
-      p_name: ing.name,
-      p_quantity: quantity,
-      p_unit: ing.unit,
-      p_category: ing.category,
-      p_added_by: user.id,
-      p_source_recipe_id: slot.recipe_id,
-      p_source_label: sourceLabel,
-      p_week_id: slot.week_id,
-    });
+      const { error: rpcError } = await supabase.rpc("merge_grocery_item", {
+        p_name: ing.name,
+        p_quantity: quantity,
+        p_unit: ing.unit,
+        p_category: ing.category,
+        p_added_by: user.id,
+        p_source_recipe_id: slot.recipe_id,
+        p_source_label: sourceLabel,
+        p_week_id: slot.week_id,
+      });
 
-    if (rpcError) {
-      // Fallback: direct insert
-      const { error: insertError } = await supabase
-        .from("grocery_items")
-        .insert({
-          name: ing.name,
-          quantity,
-          unit: ing.unit,
-          category: ing.category,
-          added_by: user.id,
-          source_recipe_id: slot.recipe_id,
-          source_label: sourceLabel,
-          week_id: slot.week_id,
-        });
+      if (rpcError) {
+        // Fallback: direct insert
+        const { error: insertError } = await supabase
+          .from("grocery_items")
+          .insert({
+            name: ing.name,
+            quantity,
+            unit: ing.unit,
+            category: ing.category,
+            added_by: user.id,
+            source_recipe_id: slot.recipe_id,
+            source_label: sourceLabel,
+            week_id: slot.week_id,
+          });
 
-      if (insertError) {
-        errors.push(`${ing.name}: ${insertError.message}`);
-        continue;
+        if (insertError) {
+          errors.push(`${ing.name}: ${insertError.message}`);
+          return false;
+        }
       }
-    }
-    itemCount++;
-  }
+      return true;
+    })
+  );
+
+  const itemCount = results.filter(Boolean).length;
 
   // Mark slot as pushed
   await supabase

@@ -17,6 +17,10 @@ type Recipe = {
   tags: string[];
 };
 
+let cachedRecipes: Recipe[] | null = null;
+let cacheTime = 0;
+const CACHE_TTL = 60_000;
+
 export function RecipePickerSheet({
   open,
   onOpenChange,
@@ -32,15 +36,22 @@ export function RecipePickerSheet({
 
   useEffect(() => {
     if (!open) return;
-    setLoading(true);
     setSearch("");
+    if (cachedRecipes && Date.now() - cacheTime < CACHE_TTL) {
+      setRecipes(cachedRecipes);
+      return;
+    }
+    setLoading(true);
     const supabase = createClient();
     supabase
       .from("recipes")
       .select("id, name, tags")
       .order("name")
-      .then(({ data }) => {
-        setRecipes(data ?? []);
+      .then(({ data }: { data: Recipe[] | null }) => {
+        const result = data ?? [];
+        cachedRecipes = result;
+        cacheTime = Date.now();
+        setRecipes(result);
         setLoading(false);
       });
   }, [open]);

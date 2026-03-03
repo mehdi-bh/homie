@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { registerServiceWorker, subscribeToPush, sendSubscriptionToServer } from "@/lib/push";
 
@@ -19,13 +19,30 @@ const REALTIME_TABLES = [
   "recipe_ingredients",
 ] as const;
 
+const PAGE_TABLES: Record<string, string[]> = {
+  "/dashboard": ["todos", "calendar_events", "dinner_slots", "lunch_slots", "chore_slots", "grocery_items"],
+  "/grocery": ["grocery_items", "grocery_staples"],
+  "/meals": ["dinner_slots", "lunch_slots", "recipes"],
+  "/chores": ["chore_slots"],
+  "/todos": ["todos"],
+  "/agenda": ["calendar_events"],
+  "/week": ["dinner_slots", "lunch_slots", "chore_slots"],
+  "/recipes": ["recipes", "recipe_ingredients"],
+};
+
 const DEBOUNCE_MS = 500;
 
 export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
 
-  const debouncedRefresh = useCallback(() => {
+  const debouncedRefresh = useCallback((table: string) => {
+    const current = pathnameRef.current;
+    const relevantTables = PAGE_TABLES[current];
+    if (relevantTables && !relevantTables.includes(table)) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => router.refresh(), DEBOUNCE_MS);
   }, [router]);
@@ -39,7 +56,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       channel.on(
         "postgres_changes",
         { event: "*", schema: "public", table },
-        debouncedRefresh
+        () => debouncedRefresh(table)
       );
     }
 
